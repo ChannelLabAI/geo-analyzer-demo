@@ -66,16 +66,16 @@
     ],
 
     "top_queries": [
-      {"query": "台灣 AI 行銷顧問", "citations": 247, "position": "first", "trend": "up", "status": "excellent"},
-      {"query": "GEO 優化是什麼", "citations": 189, "position": "first", "trend": "up", "status": "excellent"},
-      {"query": "AI 搜尋引擎優化服務", "citations": 156, "position": "second", "trend": "up", "status": "good"},
-      {"query": "品牌 AI 可見度提升", "citations": 134, "position": "first", "trend": "up", "status": "excellent"},
-      {"query": "ChatGPT 品牌引用策略", "citations": 121, "position": "second", "trend": "flat", "status": "good"},
-      {"query": "Perplexity 內容佈局", "citations": 98, "position": "third", "trend": "down", "status": "warning"},
-      {"query": "AI Overview 排名優化", "citations": 87, "position": "second", "trend": "up", "status": "good"},
-      {"query": "新創 AI 行銷方案", "citations": 76, "position": "first", "trend": "up", "status": "excellent"},
-      {"query": "製造業 AI 轉型顧問", "citations": 64, "position": "second", "trend": "flat", "status": "good"},
-      {"query": "Generative Engine Optimization 台灣", "citations": 52, "position": "third", "trend": "down", "status": "warning"}
+      {"query": "台灣 AI 行銷顧問", "citations": 247, "position": "first", "trend": "up", "status": "excellent", "screenshot": "screenshots/demo/query_1.svg"},
+      {"query": "GEO 優化是什麼", "citations": 189, "position": "first", "trend": "up", "status": "excellent", "screenshot": "screenshots/demo/query_2.svg"},
+      {"query": "AI 搜尋引擎優化服務", "citations": 156, "position": "second", "trend": "up", "status": "good", "screenshot": "screenshots/demo/query_3.svg"},
+      {"query": "品牌 AI 可見度提升", "citations": 134, "position": "first", "trend": "up", "status": "excellent", "screenshot": "screenshots/demo/query_4.svg"},
+      {"query": "ChatGPT 品牌引用策略", "citations": 121, "position": "second", "trend": "flat", "status": "good", "screenshot": "screenshots/demo/query_5.svg"},
+      {"query": "Perplexity 內容佈局", "citations": 98, "position": "third", "trend": "down", "status": "warning", "screenshot": "screenshots/demo/query_6.svg"},
+      {"query": "AI Overview 排名優化", "citations": 87, "position": "second", "trend": "up", "status": "good", "screenshot": "screenshots/demo/query_7.svg"},
+      {"query": "新創 AI 行銷方案", "citations": 76, "position": "first", "trend": "up", "status": "excellent", "screenshot": "screenshots/demo/query_8.svg"},
+      {"query": "製造業 AI 轉型顧問", "citations": 64, "position": "second", "trend": "flat", "status": "good", "screenshot": "screenshots/demo/query_9.svg"},
+      {"query": "Generative Engine Optimization 台灣", "citations": 52, "position": "third", "trend": "down", "status": "warning", "screenshot": "screenshots/demo/query_10.svg"}
     ]
   },
 

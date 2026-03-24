@@ -167,6 +167,28 @@
     .tab-btn:hover { color: var(--text-primary); background: rgba(145,213,0,0.05); }
     .tab-btn.active { color: #000; background: var(--neon-green); }
 
+    /* ============ Lightbox ============ */
+    .lightbox-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 40px; cursor: pointer; }
+    .lightbox-content { max-width: 960px; width: 100%; background: var(--black-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; cursor: default; }
+    .lightbox-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+    .lightbox-header h4 { font-size: 14px; color: var(--neon-green); text-transform: uppercase; }
+    .lightbox-close { background: none; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+    .lightbox-close:hover { color: var(--text-primary); }
+    .lightbox-body { padding: 0; }
+    .lightbox-body img, .lightbox-body object { width: 100%; display: block; }
+    .lightbox-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-tertiary); }
+
+    /* ============ Screenshot link ============ */
+    .screenshot-link { color: var(--neon-green); cursor: pointer; font-size: 12px; text-decoration: none; opacity: 0.7; transition: opacity 0.2s; }
+    .screenshot-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* ============ PDF button ============ */
+    .btn-pdf { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: transparent; color: var(--accent-yellow); border: 2px solid var(--accent-yellow); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; font-family: inherit; }
+    .btn-pdf:hover { background: rgba(253,224,82,0.1); box-shadow: 0 0 12px rgba(253,224,82,0.3); }
+
+    /* ============ Report actions bar ============ */
+    .report-actions { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 24px; }
+
     @media (max-width: 768px) {
         .landing h1 { font-size: 32px; }
         .nav-search { display: none; }
@@ -470,10 +492,15 @@
             <div class="card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-meta">${s.meta}</div></div>`).join('')}
         </div>
         ${renderSourceDomains()}
-        <h2 class="section-title">查詢排名</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <h2 class="section-title" style="margin-bottom:0">查詢排名</h2>
+            <div class="report-actions">
+                <button class="btn-pdf" onclick="exportPDF()">📄 匯出 PDF 報告</button>
+            </div>
+        </div>
         <div class="card mb-40" style="padding:0;overflow:hidden;">
             <table class="data-table">
-                <thead><tr><th>查詢</th><th>引用次數</th><th>位置</th><th>趨勢</th><th>狀態</th></tr></thead>
+                <thead><tr><th>查詢</th><th>引用次數</th><th>位置</th><th>趨勢</th><th>狀態</th><th>證據</th></tr></thead>
                 <tbody>
                 ${d.top_queries.map((q,i) => `
                 <tr class="${i===0?'top-query':''}">
@@ -482,6 +509,7 @@
                     <td><span class="badge badge-${q.position}">${posLabel[q.position]||q.position}</span></td>
                     <td><span class="trend-badge trend-${q.trend}">${trendIcon[q.trend]}</span></td>
                     <td><span class="status status-${q.status}">${statusLabel[q.status]}</span></td>
+                    <td>${q.screenshot ? `<span class="screenshot-link" onclick="openLightbox('${q.query}','${q.screenshot}')">🖼 截圖</span>` : '—'}</td>
                 </tr>`).join('')}
                 </tbody>
             </table>
@@ -678,6 +706,70 @@
     function switchTab(tab) {
         STATE.tab = tab;
         render();
+    }
+
+    // ============ Lightbox ============
+    function openLightbox(query, src) {
+        const isSvg = src.endsWith('.svg');
+        const overlay = document.createElement('div');
+        overlay.className = 'lightbox-overlay';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="lightbox-content">
+                <div class="lightbox-header">
+                    <h4>🖼 AI 回覆截圖 — ${query}</h4>
+                    <button class="lightbox-close" onclick="this.closest('.lightbox-overlay').remove()">✕</button>
+                </div>
+                <div class="lightbox-body">
+                    ${isSvg
+                        ? `<object data="${src}" type="image/svg+xml" style="width:100%;min-height:400px"></object>`
+                        : `<img src="${src}" alt="Screenshot: ${query}">`}
+                </div>
+                <div class="lightbox-footer">
+                    品牌：${STATE.brand} | 查詢：${query} | ${new Date().toLocaleDateString('zh-TW')}
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        // Close on Escape
+        const onKey = e => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
+        document.addEventListener('keydown', onKey);
+    }
+
+    // ============ PDF Export ============
+    function exportPDF() {
+        // Use browser print with a print-friendly layout
+        const style = document.createElement('style');
+        style.id = 'print-style';
+        style.textContent = `
+            @media print {
+                .nav-bar, .nav-search, .report-actions, .btn-cta, .cta-section, .tab-bar, .screenshot-link { display: none !important; }
+                body { background: #fff !important; color: #000 !important; }
+                .page-container { max-width: 100% !important; padding: 0 !important; }
+                .card, .hero-summary { background: #f9f9f9 !important; border-color: #ddd !important; box-shadow: none !important; color: #000 !important; }
+                .section-title, .card-header h3, .metric-header h3, h1, h2, h3, h4 { color: #111 !important; text-shadow: none !important; }
+                .metric-value .value, .coverage-value, .stat-value, .rank-number { color: #059669 !important; text-shadow: none !important; }
+                .hero-headline, .hero-headline .hl-brand { color: #000 !important; }
+                .hero-headline .hl-good { color: #059669 !important; }
+                .hero-headline .hl-bad { color: #dc2626 !important; }
+                .bar-fill { background: #059669 !important; box-shadow: none !important; }
+                .bar-track { background: #e5e7eb !important; border-color: #d1d5db !important; }
+                .badge, .status { border-color: #666 !important; }
+                .text-neon, .neon-glow, .trend-up { color: #059669 !important; }
+                .trend-down { color: #dc2626 !important; }
+                .data-table thead { background: #f3f4f6 !important; border-color: #d1d5db !important; }
+                .data-table th { color: #374151 !important; }
+                .hero-highlight { background: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #374151 !important; }
+                .results-context { margin-bottom: 16px !important; }
+                .context-brand { color: #059669 !important; }
+                .query-tag { background: #f3f4f6 !important; border-color: #d1d5db !important; color: #374151 !important; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                @page { margin: 1.5cm; size: A4; }
+                .page-container::before { content: 'GEO Analyzer Report — ${STATE.brand} — ${new Date().toLocaleDateString("zh-TW")}'; display: block; font-size: 10px; color: #9ca3af; margin-bottom: 16px; }
+            }
+        `;
+        document.head.appendChild(style);
+        window.print();
+        setTimeout(() => style.remove(), 1000);
     }
 
     // ============ Init ============
