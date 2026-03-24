@@ -86,7 +86,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             "--brand", brand,
             "--queries", queries if queries else brand,
             "--screenshots-dir", screenshots_dir,
-            "--platforms", "google_aio,perplexity",
+            "--platforms", "google_aio,perplexity,gemini",
         ]
         if competitors:
             cmd.extend(["--competitors", competitors])
@@ -121,8 +121,8 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             total_mentioned = 0
             total_queries = 0
 
-            platform_icons = {"google_aio": "🔗", "perplexity": "🔍"}
-            platform_names = {"google_aio": "Google AI Overview", "perplexity": "Perplexity"}
+            platform_icons = {"google_aio": "🔗", "perplexity": "🔍", "gemini": "✨"}
+            platform_names = {"google_aio": "Google AI Overview", "perplexity": "Perplexity", "gemini": "Gemini"}
 
             for pname, stats in pstats.items():
                 rate = stats.get("citation_rate", 0)
