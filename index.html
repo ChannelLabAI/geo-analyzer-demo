@@ -156,6 +156,24 @@
     .lightbox-body img, .lightbox-body object { width: 100%; display: block; }
     .lightbox-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-tertiary); }
 
+    /* ============ Comparison ============ */
+    .comparison-table { width: 100%; border-collapse: collapse; }
+    .comparison-table th { padding: 12px 16px; text-align: center; font-weight: 700; font-size: 12px; color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; background: rgba(145,213,0,0.05); border-bottom: 2px solid var(--neon-green); }
+    .comparison-table th:first-child { text-align: left; }
+    .comparison-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: center; font-size: 14px; }
+    .comparison-table td:first-child { text-align: left; font-weight: 600; }
+    .comparison-table tbody tr:last-child td { border-bottom: none; }
+    .comparison-table .is-you { color: var(--neon-green); }
+    .comparison-table .is-you td { background: rgba(145,213,0,0.03); }
+
+    .comp-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .comp-bar { height: 20px; border-radius: 3px; min-width: 4px; transition: width 0.6s ease; }
+    .comp-bar.bar-you { background: linear-gradient(90deg, var(--neon-green), var(--neon-bright)); }
+    .comp-bar.bar-comp { background: rgba(100,200,255,0.6); }
+    .comp-bar-label { font-size: 13px; font-weight: 700; min-width: 45px; }
+
+    .comp-error { color: var(--text-tertiary); font-style: italic; font-size: 13px; }
+
     /* ============ Responsive ============ */
     @media (max-width: 768px) {
         .landing h1 { font-size: 32px; }
@@ -207,7 +225,7 @@
                 </div>
 
                 <button type="button" class="advanced-toggle" id="advToggle">
-                    <span class="arrow">▶</span> 進階選項（關鍵詞、平台）
+                    <span class="arrow">▶</span> 進階選項（關鍵詞、競品、平台）
                 </button>
 
                 <div class="advanced-fields" id="advFields">
@@ -215,6 +233,11 @@
                         <label class="form-label">分析關鍵詞 <span style="color:var(--text-tertiary)">選填</span></label>
                         <input class="form-input form-input-sm" id="inputQueries" type="text" placeholder="逗號分隔，例如：AI 行銷工具, SEO 自動化">
                         <div class="form-hint">不填的話，系統會以品牌名稱作為查詢</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">競品比較 <span style="color:var(--text-tertiary)">選填，最多 3 個</span></label>
+                        <input class="form-input form-input-sm" id="inputCompetitors" type="text" placeholder="逗號分隔，例如：HubSpot, SEMrush, Moz">
+                        <div class="form-hint">加入競品後，系統會用同一組查詢分析每個競品的 AI 引用表現</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">分析平台 <span style="color:var(--text-tertiary)">選填</span></label>
@@ -252,12 +275,15 @@
             const queriesVal = document.getElementById('inputQueries').value;
             const queries = queriesVal ? queriesVal.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10) : [];
 
+            const compsVal = document.getElementById('inputCompetitors').value;
+            const competitors = compsVal ? compsVal.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3) : [];
+
             const platforms = [];
             if (document.getElementById('platGemini').checked) platforms.push('gemini');
             if (document.getElementById('platPerplexity').checked) platforms.push('perplexity');
             if (document.getElementById('platGoogleAIO').checked) platforms.push('google_aio');
 
-            navigate('loading', { brand, queries, competitors: [], platforms: platforms.length ? platforms : ['gemini'] });
+            navigate('loading', { brand, queries, competitors, platforms: platforms.length ? platforms : ['gemini'] });
         });
     }
 
@@ -265,7 +291,10 @@
     function renderLoading() {
         const platformLabels = { gemini: '✨ Gemini', perplexity: '🔍 Perplexity', google_aio: '🔗 Google AI Overview' };
         const selectedPlatforms = STATE.platforms || ['gemini'];
-        const steps = selectedPlatforms.map(p => ({ icon: platformLabels[p]?.charAt(0) || '🤖', label: `掃描 ${platformLabels[p] || p}...` }));
+        const steps = selectedPlatforms.map(p => ({ icon: platformLabels[p]?.charAt(0) || '🤖', label: `掃描 ${platformLabels[p] || p}（${STATE.brand}）...` }));
+        if (STATE.competitors.length) {
+            STATE.competitors.forEach(c => { steps.push({ icon: '🏢', label: `分析競品 ${c}...` }); });
+        }
         steps.push({ icon: '📊', label: '生成分析報告...' });
 
         return `
@@ -411,6 +440,9 @@
             <!-- Detail Panel (hidden by default) -->
             <div id="detailPanel"></div>
 
+            <!-- Competitor Comparison -->
+            ${renderComparison(d)}
+
             <!-- Source Domains -->
             ${renderSourceDomains(d)}
         </div>`;
@@ -532,6 +564,75 @@
                 </div>
             </div>
         </div>`;
+    }
+
+    // ============ Competitor Comparison ============
+    function renderComparison(d) {
+        const comps = d.competitors;
+        if (!comps || comps.length === 0) return '';
+
+        const platforms = d.platforms || [];
+        const allBrands = [
+            { brand: d.brand, overall_rate: d.summary.overall_rate, platforms: d.platforms, is_you: true },
+            ...comps.map(c => ({ ...c, is_you: false }))
+        ];
+
+        // Find max rate for bar scaling
+        const maxRate = Math.max(...allBrands.map(b => b.overall_rate || 0), 1);
+
+        return `
+        <h2 class="section-title">品牌 vs 競品 對比</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin:-16px 0 20px">同一組查詢在同一平台的引用率比較，所有數據來自真實 AI 分析。</p>
+
+        <!-- Overall Comparison Bar Chart -->
+        <div class="card mb-40">
+            <h3 style="font-size:14px;font-weight:700;color:var(--neon-green);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px">綜合引用率</h3>
+            ${allBrands.map(b => {
+                const rate = b.overall_rate;
+                const barW = rate != null ? (rate / maxRate * 100).toFixed(0) : 0;
+                return `
+                <div style="margin-bottom:16px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                        <span style="font-size:14px;font-weight:${b.is_you ? '700' : '500'};color:${b.is_you ? 'var(--neon-green)' : 'var(--text-primary)'}">${b.brand}${b.is_you ? ' (你)' : ''}</span>
+                        <span style="font-size:14px;font-weight:700;color:${b.is_you ? 'var(--neon-green)' : 'var(--accent-yellow)'}">${rate != null ? rate + '%' : '—'}</span>
+                    </div>
+                    ${rate != null ? `
+                    <div class="bar-track" style="height:20px;border-radius:4px">
+                        <div class="comp-bar ${b.is_you ? 'bar-you' : 'bar-comp'}" style="width:${barW}%;height:100%;border-radius:4px"></div>
+                    </div>` : `<div class="comp-error">分析失敗</div>`}
+                </div>`;
+            }).join('')}
+        </div>
+
+        <!-- Per-platform Comparison Table -->
+        ${platforms.length > 0 ? `
+        <div class="card mb-40" style="padding:0;overflow-x:auto">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="min-width:150px">品牌</th>
+                        <th>綜合引用率</th>
+                        ${platforms.map(p => `<th>${p.icon} ${p.name}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allBrands.map(b => {
+                        return `
+                        <tr class="${b.is_you ? 'is-you' : ''}">
+                            <td>${b.brand}${b.is_you ? ' (你)' : ''}</td>
+                            <td style="font-weight:700;color:${b.is_you ? 'var(--neon-green)' : 'var(--accent-yellow)'}">${b.overall_rate != null ? b.overall_rate + '%' : '—'}</td>
+                            ${platforms.map(mainP => {
+                                if (!b.platforms || b.platforms.length === 0) return '<td class="comp-error">—</td>';
+                                const cp = b.platforms.find(p => p.id === mainP.id);
+                                if (!cp) return '<td class="comp-error">—</td>';
+                                return `<td style="font-weight:600">${cp.citation_rate}%</td>`;
+                            }).join('')}
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>` : ''}
+        `;
     }
 
     // ============ Query Detail Panel ============
@@ -783,6 +884,37 @@
                     </tbody>
                 </table>
                 <div style="margin-top:8px;font-size:11px;color:#9ca3af">共 ${Object.keys(domains).length} 個不同網域，${domainTotal} 次引用</div>
+            </div>` : ''}
+
+            <!-- Competitor Comparison -->
+            ${(d.competitors && d.competitors.length > 0) ? `
+            <div style="margin-bottom:32px">
+                <div style="font-size:16px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:1px solid #e5e7eb;padding-bottom:8px">品牌 vs 競品 對比</div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f3f4f6">
+                            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">品牌</th>
+                            <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">綜合引用率</th>
+                            ${platforms.map(p => `<th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">${p.name}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background:#f0fdf4">
+                            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#059669">${d.brand} (你)</td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:#059669">${s.overall_rate}%</td>
+                            ${platforms.map(p => `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:600">${p.citation_rate}%</td>`).join('')}
+                        </tr>
+                        ${d.competitors.map(c => `
+                        <tr>
+                            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:500">${c.brand}</td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700">${c.overall_rate != null ? c.overall_rate + '%' : '—'}</td>
+                            ${platforms.map(mainP => {
+                                const cp = (c.platforms || []).find(p => p.id === mainP.id);
+                                return `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center">${cp ? cp.citation_rate + '%' : '—'}</td>`;
+                            }).join('')}
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
             </div>` : ''}
 
             <!-- Footer -->

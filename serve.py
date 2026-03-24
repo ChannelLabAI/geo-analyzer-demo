@@ -79,7 +79,56 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         self.json_response(data)
 
     def run_live_analysis(self, brand, queries, competitors, platforms="google_aio,perplexity,gemini"):
-        """Run geo-analyzer and return real data directly — no mock merge."""
+        """Run geo-analyzer for main brand + competitors sequentially."""
+        try:
+            # 1. Analyze main brand
+            main_result = self._run_single_brand(brand, queries, platforms)
+            if main_result is None:
+                return  # error already sent
+
+            output = main_result
+
+            # 2. Analyze competitors sequentially (respect rate limits)
+            comp_list = [c.strip() for c in competitors.split(",") if c.strip()] if competitors else []
+            comp_list = comp_list[:3]  # max 3 competitors
+
+            if comp_list:
+                comp_results = []
+                for comp_brand in comp_list:
+                    comp_data = self._run_single_brand(comp_brand, queries, platforms, timeout=120)
+                    if comp_data:
+                        comp_results.append({
+                            "brand": comp_data["brand"],
+                            "overall_rate": comp_data["summary"]["overall_rate"],
+                            "total_mentioned": comp_data["summary"]["total_mentioned"],
+                            "total_queries": comp_data["summary"]["total_queries"],
+                            "platforms": [
+                                {"id": p["id"], "name": p["name"], "icon": p["icon"],
+                                 "citation_rate": p["citation_rate"],
+                                 "mentioned_count": p["mentioned_count"],
+                                 "queries_count": p["queries_count"]}
+                                for p in comp_data["platforms"]
+                            ],
+                        })
+                    else:
+                        comp_results.append({
+                            "brand": comp_brand,
+                            "overall_rate": None,
+                            "total_mentioned": 0,
+                            "total_queries": 0,
+                            "platforms": [],
+                            "error": "Analysis failed",
+                        })
+
+                output["competitors"] = comp_results
+
+            self.json_response(output)
+
+        except Exception as e:
+            self.json_response({"error": str(e)}, 500)
+
+    def _run_single_brand(self, brand, queries, platforms, timeout=300):
+        """Run geo-analyzer for a single brand. Returns parsed output dict or None on error."""
         venv_python = GEO_ANALYZER / ".venv" / "bin" / "python"
         screenshots_dir = str(DIR / "screenshots")
 
@@ -90,26 +139,20 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             "--screenshots-dir", screenshots_dir,
             "--platforms", platforms,
         ]
-        if competitors:
-            cmd.extend(["--competitors", competitors])
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                cwd=str(GEO_ANALYZER),
+                cmd, capture_output=True, text=True,
+                timeout=timeout, cwd=str(GEO_ANALYZER),
             )
 
             if result.returncode != 0:
                 stderr = result.stderr[:500] if result.stderr else "Unknown error"
-                self.json_response({"error": f"Analysis failed: {stderr}"}, 500)
-                return
+                self.json_response({"error": f"Analysis failed for {brand}: {stderr}"}, 500)
+                return None
 
             live_data = json.loads(result.stdout)
 
-            # Compute summary from real data
             pstats = live_data.get("platform_stats", {})
             platform_icons = {"google_aio": "🔗", "perplexity": "🔍", "gemini": "✨"}
             platform_labels = {"google_aio": "Google AI Overview", "perplexity": "Perplexity", "gemini": "Gemini"}
@@ -137,7 +180,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             overall_rate = round(total_mentioned / total_queries * 100, 1) if total_queries > 0 else 0
             verdict = "good" if overall_rate >= 40 else "warning" if overall_rate >= 20 else "bad"
 
-            output = {
+            return {
                 "brand": brand,
                 "live_mode": True,
                 "generated_at": live_data.get("generated_at", ""),
@@ -152,14 +195,12 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
                 "results": live_data.get("results", []),
             }
 
-            self.json_response(output)
-
         except subprocess.TimeoutExpired:
-            self.json_response({"error": "Analysis timed out (300s). Try fewer queries or platforms."}, 504)
+            self.json_response({"error": f"Analysis timed out for {brand}"}, 504)
+            return None
         except json.JSONDecodeError as e:
-            self.json_response({"error": f"Invalid JSON from analyzer: {e}"}, 500)
-        except Exception as e:
-            self.json_response({"error": str(e)}, 500)
+            self.json_response({"error": f"Invalid JSON from analyzer for {brand}: {e}"}, 500)
+            return None
 
     def json_response(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
