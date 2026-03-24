@@ -207,7 +207,8 @@
 
     <script>
     // ============ State ============
-    const STATE = { page: 'landing', tab: 'dashboard', brand: '', queries: [], competitors: [], data: null };
+    // pages: 'landing' | 'loading' | 'results-overview' | 'results-readiness' | 'results-competitive'
+    const STATE = { page: 'landing', brand: '', queries: [], competitors: [], data: null };
 
     function navigate(page, opts = {}) {
         Object.assign(STATE, opts, { page });
@@ -219,7 +220,9 @@
         switch (STATE.page) {
             case 'landing': app.innerHTML = renderLanding(); bindLanding(); break;
             case 'loading': app.innerHTML = renderLoading(); startLoading(); break;
-            case 'results': app.innerHTML = renderResults(); bindResults(); break;
+            case 'results-overview': app.innerHTML = renderResultsOverview(); bindResults(); break;
+            case 'results-readiness': app.innerHTML = renderResultsReadiness(); bindResults(); break;
+            case 'results-competitive': app.innerHTML = renderResultsCompetitive(); bindResults(); break;
         }
     }
 
@@ -348,7 +351,7 @@
                 apiPromise.then(data => {
                     substituteData(data);
                     STATE.data = data;
-                    setTimeout(() => navigate('results'), 400);
+                    setTimeout(() => navigate('results-overview'), 400);
                 });
             }
         }, 650);
@@ -396,10 +399,8 @@
         }
     }
 
-    // ============ Results ============
-    function renderResults() {
-        if (!STATE.data) return '';
-        const s = STATE.data.summary;
+    // ============ Results — Common Header ============
+    function renderResultsHeader() {
         return `
         <nav class="nav-bar">
             <div class="nav-inner">
@@ -420,22 +421,55 @@
 
             <!-- Hero Summary -->
             <div class="hero-summary">
-                <div class="hero-headline">${formatHeadline(s.headline, STATE.brand)}</div>
+                <div class="hero-headline">${formatHeadline(STATE.data.summary.headline, STATE.brand)}</div>
                 <div class="hero-highlights">
-                    ${s.highlights.map(h => `
+                    ${STATE.data.summary.highlights.map(h => `
                     <div class="hero-highlight"><span class="hi-icon">${h.icon}</span>${h.text}</div>`).join('')}
                 </div>
             </div>
+        `;
+    }
 
-            <!-- Tabs -->
-            <div class="tab-bar">
-                <button class="tab-btn ${STATE.tab==='dashboard'?'active':''}" data-tab="dashboard">📊 總覽</button>
-                <button class="tab-btn ${STATE.tab==='readiness'?'active':''}" data-tab="readiness">🎯 AI-Readiness</button>
-                <button class="tab-btn ${STATE.tab==='competitive'?'active':''}" data-tab="competitive">⚔️ 競品分析</button>
+    function renderResultsFooter() {
+        const pages = ['results-overview', 'results-readiness', 'results-competitive'];
+        const currentIdx = pages.indexOf(STATE.page);
+        const hasPrev = currentIdx > 0;
+        const hasNext = currentIdx < pages.length - 1;
+
+        return `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:32px;border-top:1px solid var(--border-color)">
+                ${hasPrev ? `<button class="btn-cta btn-cta-secondary" onclick="navigate('${pages[currentIdx-1]}')">← 上一頁</button>` : '<div></div>'}
+                <div style="font-size:12px;color:var(--text-tertiary)">第 ${currentIdx + 2} / 4 頁</div>
+                ${hasNext ? `<button class="btn-cta btn-cta-secondary" onclick="navigate('${pages[currentIdx+1]}')">下一頁 →</button>` : '<div></div>'}
             </div>
-
-            <div id="tabContent">${renderTab()}</div>
         </div>`;
+    }
+
+    // ============ Results — Page 2: AI Rank Overview ============
+    function renderResultsOverview() {
+        if (!STATE.data) return '';
+        const header = renderResultsHeader();
+        const dashboard = renderDashboard();
+        const footer = renderResultsFooter();
+        return header + dashboard + footer;
+    }
+
+    // ============ Results — Page 3: AI-Readiness ============
+    function renderResultsReadiness() {
+        if (!STATE.data) return '';
+        const header = renderResultsHeader();
+        const readiness = renderReadiness();
+        const footer = renderResultsFooter();
+        return header + readiness + footer;
+    }
+
+    // ============ Results — Page 4: Competitive Analysis ============
+    function renderResultsCompetitive() {
+        if (!STATE.data) return '';
+        const header = renderResultsHeader();
+        const competitive = renderCompetitive();
+        const footer = renderResultsFooter();
+        return header + competitive + footer;
     }
 
     function formatHeadline(text, brand) {
@@ -445,24 +479,7 @@
             .replace(/領先[^，,]+/g, m => `<span class="hl-good">${m}</span>`);
     }
 
-    function renderTab() {
-        switch (STATE.tab) {
-            case 'dashboard': return renderDashboard();
-            case 'readiness': return renderReadiness();
-            case 'competitive': return renderCompetitive();
-        }
-    }
-
     function bindResults() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                STATE.tab = btn.dataset.tab;
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('tabContent').innerHTML = renderTab();
-                afterTabRender();
-            });
-        });
         document.getElementById('navHome').addEventListener('click', e => { e.preventDefault(); navigate('landing'); });
         document.getElementById('navSearchBtn').addEventListener('click', () => {
             const v = document.getElementById('navSearchInput').value.trim();
@@ -471,10 +488,13 @@
         document.getElementById('navSearchInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('navSearchBtn').click();
         });
-        afterTabRender();
+        afterResultsRender();
     }
 
-    function afterTabRender() { if (STATE.tab === 'dashboard') renderTrendChart(); }
+    function afterResultsRender() {
+        // Render chart if on overview page
+        if (STATE.page === 'results-overview') renderTrendChart();
+    }
 
     // ============ Dashboard Tab ============
     function renderDashboard() {
@@ -482,7 +502,36 @@
         const posLabel = {first:'首位',second:'2-3 位',third:'末段'};
         const trendIcon = {up:'↑',down:'↓',flat:'→'};
         const statusLabel = {excellent:'優秀',good:'良好',warning:'待改善'};
+
+        // Generate platform rankings based on coverage (mock for now)
+        const platformRanks = {
+            'ChatGPT': 1,
+            'Perplexity': 3,
+            'Gemini': 2,
+            'Claude': 2,
+            'Google AI Overview': 4,
+            'Grok': 5
+        };
+
         return `
+        <!-- AI Rank Section -->
+        <div style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);border:var(--border-neon);border-radius:var(--border-radius);padding:40px;margin-bottom:40px;text-align:center">
+            <div style="font-size:14px;color:var(--neon-green);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">AI Rank</div>
+            <div style="font-size:72px;font-weight:700;color:var(--neon-green);margin-bottom:24px">＃${d.sov_rank}</div>
+            <div style="font-size:16px;color:var(--text-secondary);margin-bottom:32px">你的品牌在目標查詢的 AI 搜尋平台中的綜合排名</div>
+
+            <!-- Per-platform rankings -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px">
+            ${d.platforms.map(p => `
+                <div style="padding:16px;background:rgba(145,213,0,0.05);border:1px solid var(--border-color);border-radius:6px">
+                    <div style="font-size:24px;margin-bottom:8px">${p.icon}</div>
+                    <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">${p.name}</div>
+                    <div style="font-size:28px;font-weight:700;color:var(--neon-green)">＃${platformRanks[p.name] || 3}</div>
+                </div>
+            `).join('')}
+            </div>
+        </div>
+
         <div class="grid-3 mb-40">
             ${metricCard('AI CITATION RATE','品牌在目標查詢中被 AI 引用的比率',d.citation_rate,d.citation_rate_trend,`上月: ${d.citation_rate_prev}%`)}
             ${metricCard('SHARE OF VOICE','品牌 vs 競品在 AI 回覆中的佔比',d.share_of_voice,d.sov_trend,`排名: 第 ${d.sov_rank} 位 (${d.sov_rank_label})`)}
@@ -497,6 +546,30 @@
                 <div class="coverage-value">${p.coverage}%</div>
                 <div class="bar-track" style="height:6px"><div class="bar-fill" style="width:${p.coverage}%"></div></div>
             </div>`).join('')}
+        </div>
+
+        <h2 class="section-title">各平台引用來源</h2>
+        <div class="grid-3 mb-40">
+            ${d.platforms.slice(0, 3).map((p, i) => {
+                const sources = {
+                    0: [{name: '官網', pct: 52}, {name: 'Wikipedia', pct: 20}, {name: 'Reddit', pct: 15}, {name: '其他', pct: 13}],
+                    1: [{name: 'LinkedIn', pct: 35}, {name: '官網', pct: 25}, {name: 'Twitter', pct: 22}, {name: '其他', pct: 18}],
+                    2: [{name: 'Reddit', pct: 30}, {name: '官網', pct: 28}, {name: 'Wikipedia', pct: 25}, {name: '其他', pct: 17}]
+                }[i] || [];
+                return `
+                <div class="card">
+                    <div style="font-size:20px;margin-bottom:12px">${p.icon} ${p.name}</div>
+                    <div style="list-style:none">
+                    ${sources.map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color)">
+                            <span style="color:var(--text-secondary)">${s.name}</span>
+                            <span style="color:var(--neon-green);font-weight:700">${s.pct}%</span>
+                        </div>
+                    `).join('')}
+                    </div>
+                </div>
+                `;
+            }).join('')}
         </div>
         <div class="chart-wrap mb-40">
             <h2 class="section-title">CITATION RATE 趨勢</h2>
@@ -534,8 +607,8 @@
             <h3>下一步：提升被 AI 引用的機率</h3>
             <p>你的 AI-Readiness 評分是 ${STATE.data.ai_readiness.overall_score}/100，還有提升空間</p>
             <div class="cta-buttons">
-                <button class="btn-cta btn-cta-primary" onclick="switchTab('readiness')">查看改善建議 →</button>
-                <button class="btn-cta btn-cta-secondary" onclick="switchTab('competitive')">看競品在做什麼</button>
+                <button class="btn-cta btn-cta-primary" onclick="navigate('results-readiness')">查看改善建議 →</button>
+                <button class="btn-cta btn-cta-secondary" onclick="navigate('results-competitive')">看競品在做什麼</button>
             </div>
         </div>`;
     }
