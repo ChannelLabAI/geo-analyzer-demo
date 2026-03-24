@@ -1,0 +1,5 @@
+data/history.db
+screenshots/
+.gstack/
+__pycache__/
+*.pyc

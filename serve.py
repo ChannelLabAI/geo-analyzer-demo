@@ -12,17 +12,106 @@ Usage:
 import http.server
 import json
 import os
+import re
 import socketserver
+import sqlite3
 import subprocess
 import sys
 import urllib.parse
+import uuid
 import webbrowser
+from datetime import datetime, timezone
 from pathlib import Path
 
 PORT = 8080
 LIVE_MODE = False
 DIR = Path(__file__).parent.resolve()
 GEO_ANALYZER = Path.home() / "AIwork" / "projects" / "geo-analyzer"
+DB_PATH = DIR / "data" / "history.db"
+
+
+def init_db():
+    """Initialize SQLite database for analysis history."""
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id TEXT PRIMARY KEY,
+            brand TEXT NOT NULL,
+            queries TEXT,
+            competitors TEXT,
+            platforms TEXT,
+            overall_rate REAL,
+            verdict TEXT,
+            live_mode INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            data TEXT NOT NULL
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_history_created ON history(created_at DESC)")
+    conn.commit()
+    conn.close()
+
+
+def save_history(brand, queries, competitors, platforms, data):
+    """Save analysis result to history. Returns the record ID."""
+    record_id = str(uuid.uuid4())[:8]
+    now = datetime.now(timezone.utc).isoformat()
+    summary = data.get("summary", {})
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute(
+        "INSERT INTO history (id, brand, queries, competitors, platforms, overall_rate, verdict, live_mode, created_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            record_id,
+            brand,
+            queries,
+            competitors,
+            platforms,
+            summary.get("overall_rate"),
+            summary.get("verdict"),
+            1 if data.get("live_mode") else 0,
+            now,
+            json.dumps(data, ensure_ascii=False),
+        ),
+    )
+    conn.commit()
+    conn.close()
+    return record_id
+
+
+def get_history_list(limit=50):
+    """Get recent analysis history (metadata only)."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT id, brand, queries, competitors, platforms, overall_rate, verdict, live_mode, created_at FROM history ORDER BY created_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_history_detail(record_id):
+    """Get full analysis result by ID."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM history WHERE id = ?", (record_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    result = dict(row)
+    result["data"] = json.loads(result["data"])
+    return result
+
+
+def delete_history(record_id):
+    """Delete a history record. Returns True if deleted."""
+    conn = sqlite3.connect(str(DB_PATH))
+    cursor = conn.execute("DELETE FROM history WHERE id = ?", (record_id,))
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return deleted
 
 
 def parse_args():
@@ -51,8 +140,37 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_analyze(parsed)
         elif parsed.path == "/api/status":
             self.json_response({"mode": "live" if LIVE_MODE else "demo", "geo_analyzer": str(GEO_ANALYZER)})
+        elif parsed.path == "/api/history":
+            self.handle_history_list(parsed)
+        elif re.match(r"^/api/history/[a-f0-9]+$", parsed.path):
+            record_id = parsed.path.split("/")[-1]
+            self.handle_history_detail(record_id)
         else:
             super().do_GET()
+
+    def do_DELETE(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if re.match(r"^/api/history/[a-f0-9]+$", parsed.path):
+            record_id = parsed.path.split("/")[-1]
+            if delete_history(record_id):
+                self.json_response({"ok": True})
+            else:
+                self.json_response({"error": "Not found"}, 404)
+        else:
+            self.json_response({"error": "Not found"}, 404)
+
+    def handle_history_list(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        limit = int(params.get("limit", ["50"])[0])
+        records = get_history_list(limit)
+        self.json_response(records)
+
+    def handle_history_detail(self, record_id):
+        record = get_history_detail(record_id)
+        if record:
+            self.json_response(record)
+        else:
+            self.json_response({"error": "Not found"}, 404)
 
     def handle_analyze(self, parsed):
         params = urllib.parse.parse_qs(parsed.query)
@@ -68,14 +186,16 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         if LIVE_MODE:
             self.run_live_analysis(brand, queries, competitors, platforms)
         else:
-            self.return_demo_data(brand, queries, competitors)
+            self.return_demo_data(brand, queries, competitors, platforms)
 
-    def return_demo_data(self, brand, queries, competitors):
+    def return_demo_data(self, brand, queries, competitors, platforms="gemini"):
         """Return raw mock data — all substitution happens client-side."""
         mock_path = DIR / "data" / "mock_data.json"
         with open(mock_path, encoding="utf-8") as f:
             data = json.load(f)
 
+        record_id = save_history(brand, queries, competitors, platforms, data)
+        data["history_id"] = record_id
         self.json_response(data)
 
     def run_live_analysis(self, brand, queries, competitors, platforms="google_aio,perplexity,gemini"):
@@ -122,6 +242,8 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 
                 output["competitors"] = comp_results
 
+            record_id = save_history(brand, queries, competitors, platforms, output)
+            output["history_id"] = record_id
             self.json_response(output)
 
         except Exception as e:
@@ -219,6 +341,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     parse_args()
+    init_db()
     class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         daemon_threads = True
     server = ThreadedServer(("0.0.0.0", PORT), GEOHandler)

@@ -174,6 +174,28 @@
 
     .comp-error { color: var(--text-tertiary); font-style: italic; font-size: 13px; }
 
+    /* ============ History ============ */
+    .history-section { width: 100%; max-width: 560px; margin-top: 48px; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .history-header h3 { font-size: 14px; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; }
+    .history-count { font-size: 12px; color: var(--text-tertiary); }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: var(--black-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); cursor: pointer; transition: all 0.2s; }
+    .history-item:hover { border-color: var(--neon-green); background: rgba(145,213,0,0.03); }
+    .history-brand { font-size: 15px; font-weight: 700; color: var(--text-primary); flex: 1; }
+    .history-rate { font-size: 18px; font-weight: 700; min-width: 50px; text-align: right; }
+    .history-rate.good { color: var(--neon-green); }
+    .history-rate.warning { color: var(--amber); }
+    .history-rate.bad { color: var(--red); }
+    .history-meta { font-size: 11px; color: var(--text-tertiary); min-width: 100px; text-align: right; }
+    .history-mode { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+    .history-mode.live { background: rgba(145,213,0,0.15); color: var(--neon-green); }
+    .history-mode.demo { background: rgba(100,200,255,0.15); color: var(--blue); }
+    .history-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 4px 8px; opacity: 0; transition: opacity 0.2s; }
+    .history-item:hover .history-delete { opacity: 1; }
+    .history-delete:hover { color: var(--red); }
+    .history-empty { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 24px; }
+
     /* ============ Responsive ============ */
     @media (max-width: 768px) {
         .landing h1 { font-size: 32px; }
@@ -257,6 +279,14 @@
 
                 <button class="btn-analyze" type="submit">開始分析</button>
             </form>
+
+            <div class="history-section" id="historySection" style="display:none">
+                <div class="history-header">
+                    <h3>歷史分析</h3>
+                    <span class="history-count" id="historyCount"></span>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
         </div>`;
     }
 
@@ -285,6 +315,76 @@
 
             navigate('loading', { brand, queries, competitors, platforms: platforms.length ? platforms : ['gemini'] });
         });
+
+        loadHistory();
+    }
+
+    function loadHistory() {
+        if (isStaticDeploy()) return;
+        fetch('/api/history?limit=20')
+            .then(r => r.json())
+            .then(records => {
+                const section = document.getElementById('historySection');
+                const list = document.getElementById('historyList');
+                const count = document.getElementById('historyCount');
+                if (!records.length) return;
+
+                section.style.display = 'block';
+                count.textContent = `${records.length} 筆`;
+                list.innerHTML = records.map(r => {
+                    const rate = r.overall_rate != null ? r.overall_rate : '—';
+                    const verdict = r.verdict || 'bad';
+                    const mode = r.live_mode ? 'live' : 'demo';
+                    const date = new Date(r.created_at).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const comps = r.competitors ? ` vs ${r.competitors}` : '';
+                    return `
+                    <div class="history-item" data-id="${r.id}">
+                        <div>
+                            <div class="history-brand">${r.brand}${comps ? `<span style="font-size:12px;color:var(--text-tertiary);font-weight:400">${comps}</span>` : ''}</div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+                                <span class="history-mode ${mode}">${mode}</span>
+                                <span style="font-size:11px;color:var(--text-tertiary)">${r.platforms || ''}</span>
+                            </div>
+                        </div>
+                        <div class="history-rate ${verdict}">${rate === '—' ? '—' : rate + '%'}</div>
+                        <div class="history-meta">${date}</div>
+                        <button class="history-delete" data-delete-id="${r.id}" title="刪除">✕</button>
+                    </div>`;
+                }).join('');
+
+                list.querySelectorAll('.history-item').forEach(el => {
+                    el.addEventListener('click', e => {
+                        if (e.target.closest('.history-delete')) return;
+                        const id = el.dataset.id;
+                        loadHistoryDetail(id);
+                    });
+                });
+
+                list.querySelectorAll('.history-delete').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const id = btn.dataset.deleteId;
+                        if (!confirm('確定刪除此筆分析紀錄？')) return;
+                        fetch(`/api/history/${id}`, { method: 'DELETE' })
+                            .then(() => loadHistory())
+                            .catch(err => console.error('Delete failed:', err));
+                    });
+                });
+            })
+            .catch(() => {});
+    }
+
+    function loadHistoryDetail(id) {
+        fetch(`/api/history/${id}`)
+            .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+            .then(record => {
+                STATE.data = record.data;
+                STATE.brand = record.brand;
+                STATE.queries = record.queries ? record.queries.split(',').map(s => s.trim()).filter(Boolean) : [];
+                STATE.competitors = record.competitors ? record.competitors.split(',').map(s => s.trim()).filter(Boolean) : [];
+                navigate('results');
+            })
+            .catch(err => alert('載入失敗：' + err.message));
     }
 
     // ============ Loading ============
