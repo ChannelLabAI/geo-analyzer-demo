@@ -734,8 +734,8 @@
             <h3>想知道競品做了什麼？</h3>
             <p>了解競品的 AI 可見度策略，找出超越機會</p>
             <div class="cta-buttons">
-                <button class="btn-cta btn-cta-primary" onclick="switchTab('competitive')">查看競品分析 →</button>
-                <button class="btn-cta btn-cta-secondary" onclick="switchTab('dashboard')">回到總覽</button>
+                <button class="btn-cta btn-cta-primary" onclick="navigate('results-competitive')">查看競品分析 →</button>
+                <button class="btn-cta btn-cta-secondary" onclick="navigate('results-overview')">回到總覽</button>
             </div>
         </div>`;
     }
@@ -786,15 +786,9 @@
             <p>從 AI-Readiness 改善項目開始執行，30 天就能看到引用率提升</p>
             <div class="cta-buttons">
                 <button class="btn-cta btn-cta-primary" onclick="navigate('landing')">分析其他品牌 →</button>
-                <button class="btn-cta btn-cta-secondary" onclick="switchTab('dashboard')">回到總覽</button>
+                <button class="btn-cta btn-cta-secondary" onclick="navigate('results-overview')">回到總覽</button>
             </div>
         </div>`;
-    }
-
-    // ============ Helpers ============
-    function switchTab(tab) {
-        STATE.tab = tab;
-        render();
     }
 
     // ============ Lightbox ============
