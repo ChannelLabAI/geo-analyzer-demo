@@ -174,6 +174,12 @@
 
     .comp-error { color: var(--text-tertiary); font-style: italic; font-size: 13px; }
 
+    /* ============ Trend Chart ============ */
+    .trend-canvas { width: 100%; height: 280px; }
+    .trend-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+    .trend-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .trend-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
     /* ============ History ============ */
     .history-section { width: 100%; max-width: 560px; margin-top: 48px; }
     .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -543,6 +549,9 @@
             <!-- Competitor Comparison -->
             ${renderComparison(d)}
 
+            <!-- Trend Chart (loaded async, only if ≥2 data points) -->
+            <div id="trendSection" style="display:none"></div>
+
             <!-- Source Domains -->
             ${renderSourceDomains(d)}
         </div>`;
@@ -836,6 +845,119 @@
         document.getElementById('navSearchInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('navSearchBtn').click();
         });
+
+        // Load trend data async
+        if (STATE.data?.brand && !isStaticDeploy()) {
+            fetch(`/api/history/trend?brand=${encodeURIComponent(STATE.data.brand)}`)
+                .then(r => r.json())
+                .then(trend => {
+                    if (trend.points && trend.points.length >= 2) {
+                        renderTrendChart(trend.points);
+                    }
+                })
+                .catch(() => {});
+        }
+    }
+
+    function renderTrendChart(points) {
+        const section = document.getElementById('trendSection');
+        if (!section) return;
+
+        // Collect all platform IDs across all points
+        const platformIds = new Set();
+        points.forEach(p => Object.keys(p.platform_rates || {}).forEach(id => platformIds.add(id)));
+        const platforms = [...platformIds];
+
+        const platformLabels = { gemini: 'Gemini', perplexity: 'Perplexity', google_aio: 'Google AI Overview' };
+        const platformColors = { gemini: '#FFD700', perplexity: '#64C8FF', google_aio: '#FF6B6B' };
+        const overallColor = '#91D500';
+
+        section.style.display = 'block';
+        section.innerHTML = `
+            <div class="section-title">歷史趨勢</div>
+            <p class="section-desc">同品牌歷次分析的引用率變化，共 ${points.length} 筆數據</p>
+            <div class="card">
+                <canvas id="trendCanvas" class="trend-canvas"></canvas>
+                <div class="trend-legend" id="trendLegend"></div>
+            </div>`;
+
+        // Build legend
+        const legend = document.getElementById('trendLegend');
+        legend.innerHTML = `<div class="trend-legend-item"><div class="trend-legend-dot" style="background:${overallColor}"></div>綜合引用率</div>` +
+            platforms.map(p => `<div class="trend-legend-item"><div class="trend-legend-dot" style="background:${platformColors[p] || '#888'}"></div>${platformLabels[p] || p}</div>`).join('');
+
+        // Draw chart
+        const canvas = document.getElementById('trendCanvas');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        const W = rect.width, H = rect.height;
+
+        const padL = 50, padR = 20, padT = 20, padB = 50;
+        const chartW = W - padL - padR;
+        const chartH = H - padT - padB;
+
+        // Grid + Y axis
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.font = '11px system-ui';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.textAlign = 'right';
+        for (let pct = 0; pct <= 100; pct += 25) {
+            const y = padT + chartH * (1 - pct / 100);
+            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+            ctx.fillText(pct + '%', padL - 8, y + 4);
+        }
+
+        // X axis labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        const n = points.length;
+        points.forEach((p, i) => {
+            const x = padL + (n === 1 ? chartW / 2 : chartW * i / (n - 1));
+            const d = new Date(p.date);
+            const label = `${d.getMonth() + 1}/${d.getDate()}`;
+            ctx.fillText(label, x, H - padB + 18);
+            // Time below date
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.fillText(`${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`, x, H - padB + 32);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        });
+
+        // Draw line helper
+        function drawLine(data, color, lineWidth = 2) {
+            if (data.length < 2) return;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = padL + (n === 1 ? chartW / 2 : chartW * i / (n - 1));
+                const y = padT + chartH * (1 - (val ?? 0) / 100);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Dots
+            ctx.fillStyle = color;
+            data.forEach((val, i) => {
+                const x = padL + (n === 1 ? chartW / 2 : chartW * i / (n - 1));
+                const y = padT + chartH * (1 - (val ?? 0) / 100);
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+
+        // Draw platform lines (thinner, behind)
+        platforms.forEach(pid => {
+            const data = points.map(p => p.platform_rates?.[pid] ?? null).map(v => v ?? 0);
+            drawLine(data, platformColors[pid] || '#888', 1.5);
+        });
+
+        // Draw overall line (thicker, on top)
+        drawLine(points.map(p => p.overall_rate), overallColor, 3);
     }
 
     // ============ Lightbox ============

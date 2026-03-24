@@ -114,6 +114,32 @@ def delete_history(record_id):
     return deleted
 
 
+def get_brand_trend(brand):
+    """Get chronological trend data for a brand."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT id, overall_rate, verdict, live_mode, created_at, data FROM history WHERE brand = ? ORDER BY created_at ASC",
+        (brand,),
+    ).fetchall()
+    conn.close()
+
+    points = []
+    for r in rows:
+        data = json.loads(r["data"])
+        platform_rates = {}
+        for p in data.get("platforms", []):
+            platform_rates[p["id"]] = p.get("citation_rate", 0)
+        points.append({
+            "id": r["id"],
+            "date": r["created_at"],
+            "overall_rate": r["overall_rate"],
+            "live_mode": bool(r["live_mode"]),
+            "platform_rates": platform_rates,
+        })
+    return points
+
+
 def parse_args():
     global PORT, LIVE_MODE
     args = sys.argv[1:]
@@ -142,6 +168,8 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"mode": "live" if LIVE_MODE else "demo", "geo_analyzer": str(GEO_ANALYZER)})
         elif parsed.path == "/api/history":
             self.handle_history_list(parsed)
+        elif parsed.path == "/api/history/trend":
+            self.handle_trend(parsed)
         elif re.match(r"^/api/history/[a-f0-9]+$", parsed.path):
             record_id = parsed.path.split("/")[-1]
             self.handle_history_detail(record_id)
@@ -171,6 +199,15 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.json_response(record)
         else:
             self.json_response({"error": "Not found"}, 404)
+
+    def handle_trend(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        brand = params.get("brand", [""])[0]
+        if not brand:
+            self.json_response({"error": "Missing brand"}, 400)
+            return
+        points = get_brand_trend(brand)
+        self.json_response({"brand": brand, "points": points})
 
     def handle_analyze(self, parsed):
         params = urllib.parse.parse_qs(parsed.query)
