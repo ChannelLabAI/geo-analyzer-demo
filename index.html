@@ -207,13 +207,24 @@
         .landing h1 { font-size: 32px; }
         .nav-search { display: none; }
         .summary-rate { font-size: 48px; }
+        .summary-banner { padding: 24px 16px; }
+        .comparison-table td, .comparison-table th { padding: 10px 8px; font-size: 12px; }
+        .comp-bar-wrap { flex-direction: column; align-items: flex-start; gap: 4px; }
+        .history-item { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+        .history-meta { min-width: auto; text-align: left; }
+        .trend-canvas { height: 220px; }
     }
     @media (max-width: 480px) {
         .landing h1 { font-size: 24px; }
+        .landing .tagline { font-size: 14px; }
         .tab-btn { font-size: 11px; padding: 10px 8px; }
         .form-input { font-size: 16px; }
         .matrix-table { font-size: 12px; }
         .matrix-table td, .matrix-table th { padding: 8px; }
+        .platform-rate { font-size: 28px; }
+        .detail-panel { padding: 16px; }
+        .results-context { flex-direction: column; align-items: flex-start; }
+        .report-actions { justify-content: center; }
     }
     </style>
 </head>
@@ -244,7 +255,7 @@
         <div class="landing">
             <div class="landing-logo">GEO Analyzer</div>
             <h1>你的品牌在 <span>AI 搜尋</span><br>被看見了嗎？</h1>
-            <p class="tagline">輸入品牌名稱，即時分析在 Gemini、Perplexity、Google AI Overview 等 AI 平台的引用表現</p>
+            <p class="tagline">即時分析品牌在 Gemini、Perplexity、Google AI Overview 的引用表現，追蹤趨勢、比較競品，掌握 AI 搜尋可見度</p>
 
             <form class="search-form" id="searchForm">
                 <div class="form-group">
@@ -415,6 +426,9 @@
                     <div class="step-time" id="step-time-${i}"></div>
                 </div>`).join('')}
             </div>
+            <div style="margin-top:24px;font-size:13px;color:var(--text-tertiary);text-align:center">
+                預估時間：${STATE.competitors.length ? '2-3 分鐘（含競品分析）' : '30-60 秒'}
+            </div>
             ${STATE.queries.length ? `
             <div class="loading-queries">
                 <h4>分析關鍵詞</h4>
@@ -440,8 +454,15 @@
         const apiPromise = isStaticDeploy()
             ? fetch('data/mock_data.json').then(r => r.json())
             : fetchWithTimeout(apiUrl)
-                .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
-                .then(d => { if (d.error) throw new Error(d.error); return d; });
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status === 504 ? '分析逾時，請減少查詢數量後重試' : r.status === 400 ? '請輸入有效的品牌名稱' : `伺服器錯誤 (${r.status})`);
+                    return r.json();
+                })
+                .then(d => { if (d.error) throw new Error(d.error); return d; })
+                .catch(err => {
+                    if (err.name === 'AbortError') throw new Error('連線逾時，請確認網路狀態後重試');
+                    throw err;
+                });
 
         let apiDone = false, apiData = null, apiError = null;
         apiPromise
@@ -486,15 +507,31 @@
                         STATE.data = apiData;
                         setTimeout(() => navigate('results'), 400);
                     } else {
-                        if (loadingTitle) loadingTitle.textContent = '分析失敗：' + (apiError?.message || apiError || '未知錯誤');
-                        setTimeout(() => navigate('landing'), 5000);
+                        showLoadingError(apiError?.message || apiError || '未知錯誤');
                     }
                 } else if (Date.now() - startTime > 180000) {
                     clearInterval(poll);
-                    if (loadingTitle) loadingTitle.textContent = '分析逾時（3分鐘），請稍後重試';
-                    setTimeout(() => navigate('landing'), 5000);
+                    showLoadingError('分析逾時（3分鐘），請減少查詢或競品數量後重試');
                 }
             }, 1000);
+        }
+    }
+
+    function showLoadingError(message) {
+        const loadingTitle = document.querySelector('.loading-title');
+        if (loadingTitle) {
+            loadingTitle.innerHTML = `<span style="color:var(--red)">分析失敗</span>`;
+        }
+        const steps = document.querySelector('.loading-steps');
+        if (steps) {
+            steps.innerHTML = `
+                <div style="text-align:center;padding:24px 0">
+                    <div style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6">${message}</div>
+                    <button onclick="navigate('loading',{brand:STATE.brand,queries:STATE.queries,competitors:STATE.competitors,platforms:STATE.platforms})"
+                        style="padding:12px 32px;background:var(--neon-green);color:#000;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-right:12px">重試</button>
+                    <button onclick="navigate('landing')"
+                        style="padding:12px 32px;background:transparent;color:var(--text-secondary);border:1px solid var(--border-color);border-radius:6px;font-size:14px;cursor:pointer;font-family:inherit">返回首頁</button>
+                </div>`;
         }
     }
 
@@ -1020,7 +1057,10 @@
             <div style="border-bottom:3px solid #059669;padding-bottom:24px;margin-bottom:32px">
                 <div style="display:flex;justify-content:space-between;align-items:flex-end">
                     <div>
-                        <div style="font-size:11px;color:#059669;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;font-weight:700">GEO Analyzer Report</div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                            <div style="width:40px;height:40px;background:#059669;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700">G</div>
+                            <div style="font-size:11px;color:#059669;text-transform:uppercase;letter-spacing:3px;font-weight:700">GEO Analyzer Report</div>
+                        </div>
                         <div style="font-size:32px;font-weight:700;color:#1a1a1a">${d.brand}</div>
                     </div>
                     <div style="text-align:right;font-size:12px;color:#6b7280">
@@ -1140,8 +1180,11 @@
             </div>` : ''}
 
             <!-- Footer -->
-            <div style="margin-top:40px;padding-top:16px;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af">
-                <div>Generated by GEO Analyzer — AI 品牌可見度分析工具</div>
+            <div style="margin-top:40px;padding-top:16px;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#9ca3af">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:16px;height:16px;background:#059669;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700">G</div>
+                    <span>Powered by GEO Analyzer — AI 品牌可見度分析工具</span>
+                </div>
                 <div>${new Date().toLocaleDateString('zh-TW')} ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})}</div>
             </div>
         `;
