@@ -7,6 +7,21 @@
   },
   "competitors": ["Neil Patel Digital", "HubSpot", "SEMrush", "Moz"],
 
+  "source_domains": {
+    "reddit.com": 18,
+    "en.wikipedia.org": 14,
+    "hubspot.com": 11,
+    "neilpatel.com": 9,
+    "moz.com": 7,
+    "searchengineland.com": 6,
+    "semrush.com": 5,
+    "blog.google": 4,
+    "channellab.tw": 3,
+    "youtube.com": 3,
+    "linkedin.com": 2,
+    "medium.com": 2
+  },
+
   "summary": {
     "headline": "ChannelLab 在 AI 搜尋中排名第 2，領先市場平均 3%，但落後 Neil Patel Digital 2.9%",
     "verdict": "good",

@@ -107,31 +107,80 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         self.json_response(data)
 
     def run_live_analysis(self, brand, queries, competitors):
-        """Run geo-analyzer CLI and return results."""
+        """Run Perplexity scraper via geo-analyzer and return results."""
         venv_python = GEO_ANALYZER / ".venv" / "bin" / "python"
+        screenshots_dir = str(DIR / "screenshots")
+
         cmd = [
-            str(venv_python), "-m", "geo.cli", "scan",
-            brand,
-            "-q", queries,
-            "-f", str(GEO_ANALYZER / "config.yaml"),
-            "-o", "/dev/null",
+            str(venv_python), "-m", "geo.live_analyze",
+            "--brand", brand,
+            "--queries", queries if queries else brand,
+            "--screenshots-dir", screenshots_dir,
         ]
         if competitors:
-            cmd.extend(["-c", competitors])
+            cmd.extend(["--competitors", competitors])
 
         try:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=180,
                 cwd=str(GEO_ANALYZER),
             )
-            # For now, return the mock data with a note about live mode
-            # Full integration would parse the JSON output from geo-analyzer
-            self.return_demo_data(brand, queries, competitors)
+
+            if result.returncode != 0:
+                # Fall back to demo data with error note
+                self.return_demo_data(brand, queries, competitors)
+                return
+
+            live_data = json.loads(result.stdout)
+
+            # Merge live results into mock data template for full UI
+            mock_path = DIR / "data" / "mock_data.json"
+            with open(mock_path, encoding="utf-8") as f:
+                template = json.load(f)
+
+            original_brand = template["brand"]
+            template["brand"] = brand
+            template["live_mode"] = True
+
+            # Update summary with real data
+            rate = live_data.get("citation_rate", 0)
+            template["summary"]["headline"] = (
+                f"{brand} 在 Perplexity 的 AI 引用率為 {rate}%"
+                f"（{live_data['mentioned_count']}/{live_data['queries_count']} 個查詢被引用）"
+            )
+            template["summary"]["verdict"] = "good" if rate >= 40 else "warning" if rate >= 20 else "bad"
+            template["summary"]["highlights"] = [
+                {"icon": "🔍", "text": f"Perplexity 掃描完成：{live_data['queries_count']} 個查詢"},
+                {"icon": "📊", "text": f"引用率 {rate}%，{'表現不錯' if rate >= 40 else '有提升空間'}"},
+                {"icon": "🔗", "text": f"引用來源 {len(live_data.get('source_domains', {}))} 個不同網域"},
+            ]
+
+            # Update dashboard with real Perplexity data
+            template["dashboard"]["citation_rate"] = rate
+            template["dashboard"]["platforms"] = [
+                {"name": "Perplexity", "icon": "🔍", "coverage": rate}
+            ]
+
+            # Inject source domains
+            template["source_domains"] = live_data.get("source_domains", {})
+
+            # Inject real query results
+            template["live_results"] = live_data.get("results", [])
+
+            # Competitive table — use brand name
+            for row in template.get("competitive", {}).get("competitors_table", []):
+                if row.get("is_you"):
+                    row["brand"] = f"{brand} (你)"
+
+            self.json_response(template)
+
         except subprocess.TimeoutExpired:
-            self.json_response({"error": "Analysis timed out (120s)"}, 504)
+            self.json_response({"error": "Analysis timed out (180s). Try fewer queries."}, 504)
+        except json.JSONDecodeError:
+            self.return_demo_data(brand, queries, competitors)
         except Exception as e:
             self.json_response({"error": str(e)}, 500)
 

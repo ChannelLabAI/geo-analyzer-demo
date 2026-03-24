@@ -469,6 +469,7 @@
             ${d.quick_stats.map(s => `
             <div class="card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-meta">${s.meta}</div></div>`).join('')}
         </div>
+        ${renderSourceDomains()}
         <h2 class="section-title">查詢排名</h2>
         <div class="card mb-40" style="padding:0;overflow:hidden;">
             <table class="data-table">
@@ -491,6 +492,48 @@
             <div class="cta-buttons">
                 <button class="btn-cta btn-cta-primary" onclick="switchTab('readiness')">查看改善建議 →</button>
                 <button class="btn-cta btn-cta-secondary" onclick="switchTab('competitive')">看競品在做什麼</button>
+            </div>
+        </div>`;
+    }
+
+    function renderSourceDomains() {
+        const domains = STATE.data.source_domains;
+        if (!domains || Object.keys(domains).length === 0) return '';
+        const entries = Object.entries(domains);
+        const total = entries.reduce((s, [, c]) => s + c, 0);
+        const top = entries.slice(0, 10);
+        const maxCount = top[0]?.[1] || 1;
+
+        return `
+        <h2 class="section-title">AI 引用來源分析</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin:-16px 0 20px">AI 平台從哪些網站取得資訊來回覆使用者？這決定了你的品牌能不能被引用。</p>
+        <div class="card mb-40">
+            <div style="display:flex;gap:32px;flex-wrap:wrap">
+                <div style="flex:2;min-width:300px">
+                    ${top.map(([domain, count]) => {
+                        const pct = (count / total * 100).toFixed(1);
+                        const barW = (count / maxCount * 100).toFixed(0);
+                        const isBrand = domain.includes(STATE.brand.toLowerCase().replace(/\s/g,''));
+                        return `
+                        <div style="margin-bottom:12px">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                                <span style="font-size:13px;font-weight:${isBrand?'700':'500'};color:${isBrand?'var(--neon-green)':'var(--text-primary)'}">${domain}${isBrand?' ⭐':''}</span>
+                                <span style="font-size:12px;color:var(--text-tertiary)">${count} 次 (${pct}%)</span>
+                            </div>
+                            <div class="bar-track" style="height:6px"><div class="bar-fill" style="width:${barW}%;${isBrand?'background:var(--neon-green)':''}"></div></div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <div class="card" style="background:rgba(145,213,0,0.05);border-color:var(--neon-green)">
+                        <h4 style="font-size:12px;color:var(--neon-green);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">洞察</h4>
+                        <ul style="list-style:none;font-size:13px;color:var(--text-secondary)">
+                            <li style="margin-bottom:8px">→ <strong style="color:var(--text-primary)">${top[0]?.[0]}</strong> 是 AI 最常引用的來源</li>
+                            <li style="margin-bottom:8px">→ 要提升引用率，確保品牌內容出現在這些網站</li>
+                            <li>→ Reddit 和 Wikipedia 是 AI 的主要第三方來源</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>`;
     }
