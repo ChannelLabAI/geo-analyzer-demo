@@ -121,12 +121,6 @@
     .screenshot-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: transparent; border: 1px solid var(--border-color); color: var(--text-tertiary); border-radius: 4px; cursor: pointer; font-size: 12px; font-family: inherit; transition: all 0.2s; }
     .screenshot-btn:hover { border-color: var(--neon-green); color: var(--neon-green); }
 
-    /* ============ Tab Bar ============ */
-    .tab-bar { display: flex; gap: 4px; margin-bottom: 32px; background: var(--black-card); padding: 4px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
-    .tab-btn { flex: 1; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text-tertiary); background: none; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; font-family: inherit; }
-    .tab-btn:hover { color: var(--text-primary); background: rgba(145,213,0,0.05); }
-    .tab-btn.active { color: #000; background: var(--neon-green); }
-
     /* ============ Nav Search ============ */
     .nav-search { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .nav-search input { padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 12px; font-family: inherit; width: 160px; }
@@ -200,7 +194,6 @@
     .history-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 4px 8px; opacity: 0; transition: opacity 0.2s; }
     .history-item:hover .history-delete { opacity: 1; }
     .history-delete:hover { color: var(--red); }
-    .history-empty { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 24px; }
 
     /* ============ Responsive ============ */
     @media (max-width: 768px) {
@@ -217,7 +210,6 @@
     @media (max-width: 480px) {
         .landing h1 { font-size: 24px; }
         .landing .tagline { font-size: 14px; }
-        .tab-btn { font-size: 11px; padding: 10px 8px; }
         .form-input { font-size: 16px; }
         .matrix-table { font-size: 12px; }
         .matrix-table td, .matrix-table th { padding: 8px; }
