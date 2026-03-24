@@ -12,6 +12,7 @@ Usage:
 import http.server
 import json
 import os
+import socketserver
 import subprocess
 import sys
 import urllib.parse
@@ -58,13 +59,14 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         brand = params.get("brand", [""])[0]
         queries = params.get("queries", [""])[0]
         competitors = params.get("competitors", [""])[0]
+        platforms = params.get("platforms", ["google_aio,perplexity,gemini"])[0]
 
         if not brand:
             self.json_response({"error": "Missing brand"}, 400)
             return
 
         if LIVE_MODE:
-            self.run_live_analysis(brand, queries, competitors)
+            self.run_live_analysis(brand, queries, competitors, platforms)
         else:
             self.return_demo_data(brand, queries, competitors)
 
@@ -76,8 +78,8 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 
         self.json_response(data)
 
-    def run_live_analysis(self, brand, queries, competitors):
-        """Run Google AIO + Perplexity scrapers via geo-analyzer."""
+    def run_live_analysis(self, brand, queries, competitors, platforms="google_aio,perplexity,gemini"):
+        """Run geo-analyzer and return real data directly — no mock merge."""
         venv_python = GEO_ANALYZER / ".venv" / "bin" / "python"
         screenshots_dir = str(DIR / "screenshots")
 
@@ -86,7 +88,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             "--brand", brand,
             "--queries", queries if queries else brand,
             "--screenshots-dir", screenshots_dir,
-            "--platforms", "google_aio,perplexity,gemini",
+            "--platforms", platforms,
         ]
         if competitors:
             cmd.extend(["--competitors", competitors])
@@ -101,72 +103,61 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             )
 
             if result.returncode != 0:
-                self.return_demo_data(brand, queries, competitors)
+                stderr = result.stderr[:500] if result.stderr else "Unknown error"
+                self.json_response({"error": f"Analysis failed: {stderr}"}, 500)
                 return
 
             live_data = json.loads(result.stdout)
 
-            # Merge live results into mock data template for full UI
-            mock_path = DIR / "data" / "mock_data.json"
-            with open(mock_path, encoding="utf-8") as f:
-                template = json.load(f)
-
-            template["brand"] = brand
-            template["live_mode"] = True
-
-            # Build platform stats from live data
+            # Compute summary from real data
             pstats = live_data.get("platform_stats", {})
-            platforms_ui = []
-            highlights = []
+            platform_icons = {"google_aio": "🔗", "perplexity": "🔍", "gemini": "✨"}
+            platform_labels = {"google_aio": "Google AI Overview", "perplexity": "Perplexity", "gemini": "Gemini"}
+
             total_mentioned = 0
             total_queries = 0
-
-            platform_icons = {"google_aio": "🔗", "perplexity": "🔍", "gemini": "✨"}
-            platform_names = {"google_aio": "Google AI Overview", "perplexity": "Perplexity", "gemini": "Gemini"}
+            platform_cards = []
 
             for pname, stats in pstats.items():
                 rate = stats.get("citation_rate", 0)
-                platforms_ui.append({
-                    "name": platform_names.get(pname, pname),
+                mentioned = stats.get("mentioned_count", 0)
+                count = stats.get("queries_count", 0)
+                total_mentioned += mentioned
+                total_queries += count
+                platform_cards.append({
+                    "id": pname,
+                    "name": platform_labels.get(pname, pname),
                     "icon": platform_icons.get(pname, "🤖"),
-                    "coverage": rate,
+                    "citation_rate": rate,
+                    "mentioned_count": mentioned,
+                    "queries_count": count,
+                    "position_counts": stats.get("position_counts", {}),
                 })
-                total_mentioned += stats.get("mentioned_count", 0)
-                total_queries += stats.get("queries_count", 0)
-
-                if pname == "google_aio":
-                    aio_count = stats.get("has_ai_overview_count", 0)
-                    highlights.append({"icon": "🔗", "text": f"Google AI Overview：{aio_count}/{stats['queries_count']} 個查詢出現 AI 概覽，引用率 {rate}%"})
-                elif pname == "perplexity":
-                    highlights.append({"icon": "🔍", "text": f"Perplexity：引用率 {rate}%"})
 
             overall_rate = round(total_mentioned / total_queries * 100, 1) if total_queries > 0 else 0
-            highlights.append({"icon": "🔗", "text": f"引用來源 {len(live_data.get('source_domains', {}))} 個不同網域"})
+            verdict = "good" if overall_rate >= 40 else "warning" if overall_rate >= 20 else "bad"
 
-            template["summary"]["headline"] = f"{brand} 在 AI 搜尋的綜合引用率為 {overall_rate}%（{total_mentioned}/{total_queries} 個查詢被引用）"
-            template["summary"]["verdict"] = "good" if overall_rate >= 40 else "warning" if overall_rate >= 20 else "bad"
-            template["summary"]["highlights"] = highlights
+            output = {
+                "brand": brand,
+                "live_mode": True,
+                "generated_at": live_data.get("generated_at", ""),
+                "summary": {
+                    "overall_rate": overall_rate,
+                    "total_mentioned": total_mentioned,
+                    "total_queries": total_queries,
+                    "verdict": verdict,
+                },
+                "platforms": platform_cards,
+                "source_domains": live_data.get("source_domains", {}),
+                "results": live_data.get("results", []),
+            }
 
-            template["dashboard"]["citation_rate"] = overall_rate
-            template["dashboard"]["platforms"] = platforms_ui
-
-            # Inject source domains
-            template["source_domains"] = live_data.get("source_domains", {})
-
-            # Inject real query results
-            template["live_results"] = live_data.get("results", [])
-
-            # Competitive table — use brand name
-            for row in template.get("competitive", {}).get("competitors_table", []):
-                if row.get("is_you"):
-                    row["brand"] = f"{brand} (你)"
-
-            self.json_response(template)
+            self.json_response(output)
 
         except subprocess.TimeoutExpired:
-            self.json_response({"error": "Analysis timed out (180s). Try fewer queries."}, 504)
-        except json.JSONDecodeError:
-            self.return_demo_data(brand, queries, competitors)
+            self.json_response({"error": "Analysis timed out (300s). Try fewer queries or platforms."}, 504)
+        except json.JSONDecodeError as e:
+            self.json_response({"error": f"Invalid JSON from analyzer: {e}"}, 500)
         except Exception as e:
             self.json_response({"error": str(e)}, 500)
 
@@ -181,13 +172,15 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 
     def log_message(self, format, *args):
         # Suppress static file logs, show API calls
-        if "/api/" in (args[0] if args else ""):
+        if args and "/api/" in str(args[0]):
             super().log_message(format, *args)
 
 
 def main():
     parse_args()
-    server = http.server.HTTPServer(("0.0.0.0", PORT), GEOHandler)
+    class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        daemon_threads = True
+    server = ThreadedServer(("0.0.0.0", PORT), GEOHandler)
     mode = "LIVE" if LIVE_MODE else "DEMO"
     url = f"http://localhost:{PORT}/"
 
