@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEO Analyzer — AI 品牌可見度分析</title>
     <link rel="stylesheet" href="css/common.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
     /* ============ Landing ============ */
     .landing { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
@@ -664,32 +665,153 @@
 
     // ============ PDF Export ============
     function exportPDF() {
-        const style = document.createElement('style');
-        style.id = 'print-style';
-        style.textContent = `
-            @media print {
-                .nav-bar, .nav-search, .report-actions, .btn-pdf, .detail-close, .screenshot-btn { display: none !important; }
-                body { background: #fff !important; color: #000 !important; }
-                .page-container { max-width: 100% !important; padding: 0 !important; }
-                .card, .summary-banner, .detail-panel { background: #f9f9f9 !important; border-color: #ddd !important; box-shadow: none !important; color: #000 !important; }
-                .section-title, .card h4, h1, h2, h3, h4 { color: #111 !important; text-shadow: none !important; }
-                .summary-rate, .platform-rate { color: #059669 !important; text-shadow: none !important; }
-                .bar-fill { background: #059669 !important; box-shadow: none !important; }
-                .bar-track { background: #e5e7eb !important; border-color: #d1d5db !important; }
-                .cell-cited { color: #059669 !important; }
-                .cell-not-cited { color: #dc2626 !important; }
-                .matrix-table thead { background: #f3f4f6 !important; border-color: #d1d5db !important; }
-                .matrix-table th { color: #374151 !important; }
-                .context-brand { color: #059669 !important; }
-                .query-tag { background: #f3f4f6 !important; border-color: #d1d5db !important; color: #374151 !important; }
-                .detail-snippet mark { background: #bbf7d0 !important; color: #059669 !important; }
-                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                @page { margin: 1.5cm; size: A4; }
-                .page-container::before { content: 'GEO Analyzer Report — ${STATE.brand} — ${new Date().toLocaleDateString("zh-TW")}'; display: block; font-size: 10px; color: #9ca3af; margin-bottom: 16px; }
-            }
+        const d = STATE.data;
+        if (!d) return;
+
+        const btn = document.querySelector('.btn-pdf');
+        if (btn) { btn.textContent = '⏳ 生成中...'; btn.disabled = true; }
+
+        const s = d.summary;
+        const platforms = d.platforms || [];
+        const results = d.results || [];
+        const domains = d.source_domains || {};
+        const verdictLabels = { good: '表現良好', warning: '有改善空間', bad: '需要關注' };
+        const posLabels = { title: '標題', first: '首位', middle: '中段', end: '末段', none: '—' };
+
+        // Group results by query
+        const queryMap = {};
+        results.forEach(r => {
+            if (!queryMap[r.query]) queryMap[r.query] = {};
+            queryMap[r.query][r.platform] = r;
+        });
+        const queries = Object.keys(queryMap);
+        const platformIds = platforms.map(p => p.id);
+
+        // Source domains top 10
+        const domainEntries = Object.entries(domains).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const domainTotal = Object.values(domains).reduce((s, c) => s + c, 0);
+
+        const report = document.createElement('div');
+        report.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;font-family:Inter,-apple-system,sans-serif;color:#1a1a1a;background:#fff;padding:32px;';
+        report.innerHTML = `
+            <div style="border-bottom:3px solid #059669;padding-bottom:24px;margin-bottom:32px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end">
+                    <div>
+                        <div style="font-size:11px;color:#059669;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;font-weight:700">GEO Analyzer Report</div>
+                        <div style="font-size:32px;font-weight:700;color:#1a1a1a">${d.brand}</div>
+                    </div>
+                    <div style="text-align:right;font-size:12px;color:#6b7280">
+                        <div>AI 品牌可見度分析報告</div>
+                        <div>分析日期：${new Date(d.generated_at || Date.now()).toLocaleDateString('zh-TW')}</div>
+                        <div>平台：${platforms.map(p => p.name).join('、')}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div style="background:#f0fdf4;border:2px solid #059669;border-radius:8px;padding:24px;margin-bottom:32px;text-align:center">
+                <div style="font-size:48px;font-weight:700;color:#059669">${s.overall_rate}%</div>
+                <div style="font-size:16px;color:#374151;margin-top:8px">綜合引用率 — ${s.total_mentioned} / ${s.total_queries} 個查詢被 AI 引用</div>
+                <div style="display:inline-block;margin-top:12px;padding:4px 12px;background:${s.verdict === 'good' ? '#dcfce7' : s.verdict === 'warning' ? '#fef9c3' : '#fee2e2'};border-radius:4px;font-size:12px;font-weight:700;color:${s.verdict === 'good' ? '#166534' : s.verdict === 'warning' ? '#854d0e' : '#991b1b'}">${verdictLabels[s.verdict] || s.verdict}</div>
+            </div>
+
+            <!-- Platform Coverage -->
+            <div style="margin-bottom:32px">
+                <div style="font-size:16px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:1px solid #e5e7eb;padding-bottom:8px">各平台引用率</div>
+                <div style="display:flex;gap:16px;flex-wrap:wrap">
+                    ${platforms.map(p => `
+                    <div style="flex:1;min-width:140px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;text-align:center">
+                        <div style="font-size:20px;margin-bottom:4px">${p.icon}</div>
+                        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">${p.name}</div>
+                        <div style="font-size:28px;font-weight:700;color:#059669">${p.citation_rate}%</div>
+                        <div style="font-size:11px;color:#9ca3af;margin-top:4px">${p.mentioned_count} / ${p.queries_count} 查詢</div>
+                    </div>`).join('')}
+                </div>
+            </div>
+
+            <!-- Query Matrix -->
+            <div style="margin-bottom:32px">
+                <div style="font-size:16px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:1px solid #e5e7eb;padding-bottom:8px">查詢 × 平台 結果矩陣</div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f3f4f6">
+                            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">查詢</th>
+                            ${platforms.map(p => `<th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">${p.name}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${queries.map(query => {
+                            const row = queryMap[query];
+                            return `<tr>
+                                <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:500">${query}</td>
+                                ${platformIds.map(pid => {
+                                    const r = row[pid];
+                                    if (!r) return `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:#9ca3af">—</td>`;
+                                    if (r.error) return `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:#d97706">⚠ 錯誤</td>`;
+                                    if (r.brand_mentioned) return `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:#059669;font-weight:700">✓ ${posLabels[r.mention_position] || ''}</td>`;
+                                    return `<td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:#dc2626">✗</td>`;
+                                }).join('')}
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Source Domains -->
+            ${domainEntries.length > 0 ? `
+            <div style="margin-bottom:32px">
+                <div style="font-size:16px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:1px solid #e5e7eb;padding-bottom:8px">AI 引用來源排行</div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f3f4f6">
+                            <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">網域</th>
+                            <th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059669">引用次數</th>
+                            <th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;border-bottom:2px solid #059679">佔比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${domainEntries.map(([domain, count]) => {
+                            const pct = (count / domainTotal * 100).toFixed(1);
+                            const brandLower = d.brand.toLowerCase().replace(/\s/g, '');
+                            const isBrand = domain.toLowerCase().includes(brandLower);
+                            return `<tr${isBrand ? ' style="background:#f0fdf4"' : ''}>
+                                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-weight:${isBrand ? '700;color:#059669' : '500'}">${domain}${isBrand ? ' ⭐' : ''}</td>
+                                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${count}</td>
+                                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;color:#6b7280">${pct}%</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top:8px;font-size:11px;color:#9ca3af">共 ${Object.keys(domains).length} 個不同網域，${domainTotal} 次引用</div>
+            </div>` : ''}
+
+            <!-- Footer -->
+            <div style="margin-top:40px;padding-top:16px;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af">
+                <div>Generated by GEO Analyzer — AI 品牌可見度分析工具</div>
+                <div>${new Date().toLocaleDateString('zh-TW')} ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
         `;
-        document.head.appendChild(style);
-        setTimeout(() => { window.print(); setTimeout(() => style.remove(), 1000); }, 100);
+
+        document.body.appendChild(report);
+
+        const filename = `GEO-Report-${d.brand}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+        html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        }).from(report).save().then(() => {
+            report.remove();
+            if (btn) { btn.textContent = '📄 匯出 PDF 報告'; btn.disabled = false; }
+        }).catch(err => {
+            console.error('PDF export failed:', err);
+            report.remove();
+            if (btn) { btn.textContent = '📄 匯出 PDF 報告'; btn.disabled = false; }
+            alert('PDF 匯出失敗，請重試');
+        });
     }
 
     // ============ Init ============
