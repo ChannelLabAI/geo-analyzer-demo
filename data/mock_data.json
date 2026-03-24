@@ -1,0 +1,171 @@
+{
+  "brand": "ChannelLab",
+  "generated_at": "2026-03-24T01:00:00Z",
+  "date_range": {
+    "start": "2026-02-24",
+    "end": "2026-03-24"
+  },
+  "competitors": ["Neil Patel Digital", "HubSpot", "SEMrush", "Moz"],
+
+  "summary": {
+    "headline": "ChannelLab 在 AI 搜尋中排名第 2，領先市場平均 3%，但落後 Neil Patel Digital 2.9%",
+    "verdict": "good",
+    "highlights": [
+      {"icon": "📈", "text": "Citation Rate 月增 12.1%，成長速度為競品中最快"},
+      {"icon": "⚠️", "text": "Perplexity 引用率偏低（31%），建議優先補強"},
+      {"icon": "🎯", "text": "發佈 2 份原創研究即可超越 Neil Patel，預估 +5-7%"}
+    ]
+  },
+
+  "dashboard": {
+    "citation_rate": 42.3,
+    "citation_rate_prev": 30.2,
+    "citation_rate_trend": 12.1,
+    "share_of_voice": 35.8,
+    "sov_trend": 5.2,
+    "sov_rank": 2,
+    "sov_rank_label": "領先 HubSpot",
+    "query_coverage": 68,
+    "query_coverage_trend": 18,
+    "query_total": 100,
+
+    "platforms": [
+      {"name": "ChatGPT", "icon": "🤖", "coverage": 52},
+      {"name": "Perplexity", "icon": "🔍", "coverage": 31},
+      {"name": "Gemini", "icon": "✨", "coverage": 47},
+      {"name": "Claude", "icon": "🌟", "coverage": 38},
+      {"name": "Google AI Overview", "icon": "🔗", "coverage": 29},
+      {"name": "Grok", "icon": "⚡", "coverage": 18}
+    ],
+
+    "trend_data": {
+      "labels": ["2025/10", "2025/11", "2025/12", "2026/01", "2026/02", "2026/03"],
+      "values": [18.2, 22.5, 26.8, 31.2, 37.4, 42.3]
+    },
+
+    "quick_stats": [
+      {"label": "本月新增引用", "value": "+847", "meta": "較上月 +31%"},
+      {"label": "首位引用佔比", "value": "24%", "meta": "目標: 30%"},
+      {"label": "AI 可讀性評分", "value": "7.6/10", "meta": "上月: 7.1/10"},
+      {"label": "Schema 覆蓋率", "value": "89%", "meta": "覆蓋 52/58 頁"}
+    ],
+
+    "top_queries": [
+      {"query": "台灣 AI 行銷顧問", "citations": 247, "position": "first", "trend": "up", "status": "excellent"},
+      {"query": "GEO 優化是什麼", "citations": 189, "position": "first", "trend": "up", "status": "excellent"},
+      {"query": "AI 搜尋引擎優化服務", "citations": 156, "position": "second", "trend": "up", "status": "good"},
+      {"query": "品牌 AI 可見度提升", "citations": 134, "position": "first", "trend": "up", "status": "excellent"},
+      {"query": "ChatGPT 品牌引用策略", "citations": 121, "position": "second", "trend": "flat", "status": "good"},
+      {"query": "Perplexity 內容佈局", "citations": 98, "position": "third", "trend": "down", "status": "warning"},
+      {"query": "AI Overview 排名優化", "citations": 87, "position": "second", "trend": "up", "status": "good"},
+      {"query": "新創 AI 行銷方案", "citations": 76, "position": "first", "trend": "up", "status": "excellent"},
+      {"query": "製造業 AI 轉型顧問", "citations": 64, "position": "second", "trend": "flat", "status": "good"},
+      {"query": "Generative Engine Optimization 台灣", "citations": 52, "position": "third", "trend": "down", "status": "warning"}
+    ]
+  },
+
+  "ai_readiness": {
+    "overall_score": 76,
+    "status": "良好",
+    "dimensions": [
+      {
+        "name": "內容結構",
+        "icon": "📋",
+        "score": 8.1,
+        "items": [
+          {"text": "H1-H3 標題層級正確", "type": "positive"},
+          {"text": "平均段落長度 180 字，適中", "type": "positive"},
+          {"text": "服務頁缺少 FAQ 區塊，AI 難以擷取", "type": "caution"}
+        ]
+      },
+      {
+        "name": "內容具體性",
+        "icon": "🎯",
+        "score": 6.8,
+        "items": [
+          {"text": "包含 12 組客戶數據與 ROI 案例", "type": "positive"},
+          {"text": "缺少原創產業研究報告", "type": "caution"},
+          {"text": "案例研究僅 3 篇，競品平均 8 篇", "type": "caution"}
+        ]
+      },
+      {
+        "name": "Schema Markup",
+        "icon": "🏷️",
+        "score": 8.9,
+        "items": [
+          {"text": "89% 頁面有 JSON-LD Organization schema", "type": "positive"},
+          {"text": "服務頁有 Service schema + FAQ markup", "type": "positive"},
+          {"text": "部落格文章缺少 Article schema", "type": "caution"}
+        ]
+      },
+      {
+        "name": "內容新鮮度",
+        "icon": "⏰",
+        "score": 7.2,
+        "items": [
+          {"text": "核心服務頁每月更新", "type": "positive"},
+          {"text": "發佈日期有清楚 datetime 標記", "type": "positive"},
+          {"text": "12 篇部落格超過 6 個月未更新", "type": "caution"}
+        ]
+      },
+      {
+        "name": "可引用性",
+        "icon": "🔗",
+        "score": 7.4,
+        "items": [
+          {"text": "GEO 定義頁被 Perplexity 直接引用", "type": "positive"},
+          {"text": "缺少「創辦人觀點」等可引用的權威內容", "type": "caution"}
+        ]
+      },
+      {
+        "name": "技術 SEO",
+        "icon": "⚙️",
+        "score": 7.8,
+        "items": [
+          {"text": "Core Web Vitals 全部通過", "type": "positive"},
+          {"text": "robots.txt 允許 GPTBot 和 PerplexityBot", "type": "positive"},
+          {"text": "sitemap.xml 缺少 lastmod 時間戳", "type": "caution"}
+        ]
+      }
+    ],
+    "improvements": [
+      {"title": "發佈 2 份原創 GEO 產業研究", "desc": "針對「台灣品牌 AI 可見度」和「製造業 AI 轉型」發佈原創數據報告，讓 AI 平台有獨家內容可引用。", "impact": "+5-7%", "priority": "high"},
+      {"title": "擴充案例研究到 8 篇以上", "desc": "目前只有 3 篇案例。補上良渠智能、ChannelPulse 等專案的完整案例（含數據、時程、ROI）。", "impact": "+3-5%", "priority": "high"},
+      {"title": "所有服務頁加入 FAQ 區塊", "desc": "AI 平台偏好 Q&A 格式的內容。每個服務頁加 5-8 個常見問題，用 FAQPage schema 標記。", "impact": "+4-6%", "priority": "high"},
+      {"title": "在 Reddit/Quora 建立第三方提及", "desc": "AI 搜尋重視第三方來源。在 r/marketing、r/SEO 分享 GEO 經驗，Quora 回答 AI 行銷相關問題。", "impact": "+8-12%", "priority": "medium"},
+      {"title": "更新 12 篇過時部落格", "desc": "超過 6 個月未更新的內容會降低 AI 引用機率。至少更新 30% 內容 + 時間戳。", "impact": "+2-3%", "priority": "medium"}
+    ],
+    "action_plan": [
+      {"phase": "第 1 周", "title": "內容審計 & Schema 補強", "tasks": ["盤點 58 頁內容，標記需要更新的頁面", "所有服務頁加入 FAQ 區塊 + FAQPage schema", "部落格文章補上 Article schema"]},
+      {"phase": "第 2-3 周", "title": "核心內容產出", "tasks": ["撰寫良渠智能案例研究（含 ROI 數據）", "撰寫 ChannelPulse 案例研究", "啟動「台灣品牌 AI 可見度」研究報告"]},
+      {"phase": "第 4 周", "title": "第三方佈局 & 發佈", "tasks": ["Reddit r/marketing 發佈 2 篇 GEO 經驗分享", "Quora 回答 5 個 AI 行銷問題", "發佈原創研究報告 + LinkedIn 推廣"]}
+    ]
+  },
+
+  "competitive": {
+    "your_rank": 2,
+    "leader": {"name": "Neil Patel Digital", "rate": 45.2, "gap": 2.9},
+    "market_avg": {"rate": 39.4, "vs_you": "+3"},
+
+    "competitors_table": [
+      {"rank": 1, "brand": "Neil Patel Digital", "citation_rate": 45.2, "sov": 28.1, "coverage": 72, "trend": "+0.3%", "is_you": false},
+      {"rank": 2, "brand": "ChannelLab (你)", "citation_rate": 42.3, "sov": 24.6, "coverage": 68, "trend": "+12.1%", "is_you": true},
+      {"rank": 3, "brand": "HubSpot", "citation_rate": 38.7, "sov": 22.3, "coverage": 64, "trend": "-1.2%", "is_you": false},
+      {"rank": 4, "brand": "SEMrush", "citation_rate": 35.2, "sov": 18.4, "coverage": 58, "trend": "+1.8%", "is_you": false},
+      {"rank": 5, "brand": "Moz", "citation_rate": 31.9, "sov": 6.6, "coverage": 52, "trend": "-5.1%", "is_you": false}
+    ],
+
+    "opportunities": [
+      {"priority": "high", "title": "發佈原創研究超越 Neil Patel", "desc": "Neil Patel 的優勢來自大量原創數據。發佈 2 份台灣市場研究即可縮短差距 +5-7%"},
+      {"priority": "high", "title": "強化 Perplexity 引用", "desc": "ChannelLab 在 Perplexity 僅 31%，但 Neil Patel 達 58%。補強 FAQ + 定義頁可快速提升"},
+      {"priority": "medium", "title": "Reddit/Quora 第三方內容", "desc": "HubSpot 的高引用率靠社群提及。在 Reddit 分享經驗可搶佔 HubSpot 的份額"},
+      {"priority": "medium", "title": "YouTube 教學影片", "desc": "Google AI Overview 偏好引用有影片的頁面。製作 3-5 支 GEO 教學可提升 Google AI 引用 +3-5%"}
+    ],
+
+    "strategy": [
+      {"phase": "第 1-2 週", "title": "差距分析", "tasks": ["分析 Neil Patel 被引用的 Top 20 頁面", "找出 ChannelLab 缺失的內容主題", "盤點 Perplexity 引用的內容格式偏好"]},
+      {"phase": "第 3-6 週", "title": "內容追趕", "tasks": ["發佈 5 篇案例研究（含數據）", "所有服務頁加 FAQ + Schema", "發佈第一份原創研究報告", "Reddit/Quora 每週 2 篇"]},
+      {"phase": "第 7-12 週", "title": "超越與鞏固", "tasks": ["發佈第二份研究報告 + 媒體 PR", "製作 5 支 YouTube GEO 教學", "預期 Citation Rate 達到 48%，超越 Neil Patel"]}
+    ]
+  }
+}
