@@ -260,7 +260,7 @@
             </form>
 
             <div class="demo-note">
-                <a href="#" id="tryDemo">試試看：分析 ChannelLab 的 AI 可見度 →</a>
+                <a href="javascript:void(0)" id="tryDemo">試試看：分析 ChannelLab 的 AI 可見度 →</a>
             </div>
         </div>`;
     }
@@ -323,12 +323,18 @@
         </div>`;
     }
 
+    function isStaticDeploy() {
+        return location.hostname.includes('github.io') || location.protocol === 'file:';
+    }
+
     function startLoading() {
         const apiUrl = `/api/analyze?brand=${encodeURIComponent(STATE.brand)}&queries=${encodeURIComponent(STATE.queries.join(','))}&competitors=${encodeURIComponent(STATE.competitors.join(','))}`;
-        const apiPromise = fetch(apiUrl)
-            .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
-            .then(d => { if (d.error) throw new Error(d.error); return d; })
-            .catch(() => fetch('data/mock_data.json').then(r => r.json()));
+        const apiPromise = isStaticDeploy()
+            ? fetch('data/mock_data.json').then(r => r.json())
+            : fetch(apiUrl)
+                .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
+                .then(d => { if (d.error) throw new Error(d.error); return d; })
+                .catch(() => fetch('data/mock_data.json').then(r => r.json()));
 
         let current = 0;
         const total = 5;
@@ -404,7 +410,7 @@
         return `
         <nav class="nav-bar">
             <div class="nav-inner">
-                <a class="nav-brand" href="#" id="navHome">GEO Analyzer</a>
+                <a class="nav-brand" href="javascript:void(0)" id="navHome">GEO Analyzer</a>
                 <div class="nav-search">
                     <input type="text" id="navSearchInput" placeholder="分析其他品牌...">
                     <button id="navSearchBtn">分析</button>
