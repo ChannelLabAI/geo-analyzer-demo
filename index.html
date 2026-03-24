@@ -356,27 +356,43 @@
 
     function substituteData(data) {
         const orig = data.brand;
+        const origComps = [...(data.competitors || [])];
         data.brand = STATE.brand;
-        // Headline brand substitution
-        if (data.summary && data.summary.headline) {
-            data.summary.headline = data.summary.headline.replace(orig, STATE.brand);
-        }
-        // Competitive table "you" row
+
+        // Competitive table "you" row + competitor rows
         const ct = data.competitive && data.competitive.competitors_table;
         if (ct) ct.forEach(r => { if (r.is_you) r.brand = STATE.brand + ' (你)'; });
+
         // Top queries substitution if user provided custom queries
         if (STATE.queries.length && data.dashboard && data.dashboard.top_queries) {
             const tq = data.dashboard.top_queries;
             STATE.queries.forEach((q, i) => { if (i < tq.length) tq[i].query = q; });
             if (STATE.queries.length < tq.length) data.dashboard.top_queries = tq.slice(0, Math.max(STATE.queries.length, 5));
         }
+
         // Competitors substitution
+        const actualComps = STATE.competitors.length ? STATE.competitors : origComps;
         if (STATE.competitors.length) {
             data.competitors = STATE.competitors;
             if (ct) {
                 let ci = 0;
                 ct.forEach(r => { if (!r.is_you && ci < STATE.competitors.length) { r.brand = STATE.competitors[ci++]; } });
             }
+            if (data.competitive && data.competitive.leader) {
+                data.competitive.leader.name = STATE.competitors[0];
+            }
+        }
+
+        // Headline: replace brand + competitor names
+        if (data.summary && data.summary.headline) {
+            let hl = data.summary.headline.replace(orig, STATE.brand);
+            for (const oc of origComps) {
+                if (hl.includes(oc) && actualComps.length) {
+                    hl = hl.replace(oc, actualComps[0]);
+                    break;
+                }
+            }
+            data.summary.headline = hl;
         }
     }
 

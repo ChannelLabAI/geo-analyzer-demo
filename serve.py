@@ -69,40 +69,10 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.return_demo_data(brand, queries, competitors)
 
     def return_demo_data(self, brand, queries, competitors):
-        """Return mock data with brand/queries substituted."""
+        """Return raw mock data — all substitution happens client-side."""
         mock_path = DIR / "data" / "mock_data.json"
         with open(mock_path, encoding="utf-8") as f:
             data = json.load(f)
-
-        # Substitute brand name throughout
-        original_brand = data["brand"]
-        data["brand"] = brand
-        if "summary" in data and "headline" in data["summary"]:
-            data["summary"]["headline"] = data["summary"]["headline"].replace(original_brand, brand)
-
-        # Substitute in competitive table "you" row
-        for row in data.get("competitive", {}).get("competitors_table", []):
-            if row.get("is_you"):
-                row["brand"] = f"{brand} (你)"
-
-        # Substitute query list if user provided custom ones
-        query_list = [q.strip() for q in queries.split(",") if q.strip()]
-        if query_list:
-            data["dashboard"]["top_queries"] = data["dashboard"]["top_queries"][:len(query_list)]
-            for i, q in enumerate(query_list):
-                if i < len(data["dashboard"]["top_queries"]):
-                    data["dashboard"]["top_queries"][i]["query"] = q
-
-        # Substitute competitors
-        if competitors:
-            comp_list = [c.strip() for c in competitors.split(",") if c.strip()]
-            if comp_list:
-                data["competitors"] = comp_list
-                for i, c in enumerate(comp_list):
-                    if i < len(data["competitive"]["competitors_table"]):
-                        row = data["competitive"]["competitors_table"][i]
-                        if not row.get("is_you"):
-                            row["brand"] = c
 
         self.json_response(data)
 
