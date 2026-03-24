@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO Analyzer — AI 品牌可見度分析</title>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+    /* ============ Landing ============ */
+    .landing { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+    .landing-logo { font-size: 14px; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 16px; }
+    .landing h1 { font-size: 56px; font-weight: 700; color: var(--text-primary); text-align: center; margin-bottom: 12px; line-height: 1.2; }
+    .landing h1 span { color: var(--neon-green); }
+    .landing .tagline { font-size: 18px; color: var(--text-secondary); text-align: center; margin-bottom: 48px; max-width: 600px; }
+
+    .search-form { width: 100%; max-width: 560px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .form-input { width: 100%; padding: 16px 20px; background: var(--black-card); border: 2px solid var(--border-color); border-radius: var(--border-radius); color: var(--text-primary); font-size: 18px; font-family: inherit; transition: border-color 0.2s; }
+    .form-input:focus { outline: none; border-color: var(--neon-green); box-shadow: 0 0 12px rgba(145,213,0,0.2); }
+    .form-input::placeholder { color: var(--text-tertiary); }
+    .form-input-sm { font-size: 14px; padding: 12px 16px; }
+    .form-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
+
+    .advanced-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-tertiary); cursor: pointer; margin-bottom: 16px; transition: color 0.2s; background: none; border: none; font-family: inherit; }
+    .advanced-toggle:hover { color: var(--neon-green); }
+    .advanced-toggle .arrow { display: inline-block; transition: transform 0.2s; }
+    .advanced-toggle.open .arrow { transform: rotate(90deg); }
+    .advanced-fields { display: none; }
+    .advanced-fields.open { display: block; }
+
+    .btn-analyze { width: 100%; padding: 18px; background: var(--neon-green); color: #000; border: none; border-radius: var(--border-radius); font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s; margin-top: 8px; }
+    .btn-analyze:hover { background: var(--neon-bright); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+
+    .demo-note { margin-top: 24px; font-size: 12px; color: var(--text-tertiary); text-align: center; }
+    .demo-note a { color: var(--neon-green); text-decoration: none; }
+
+    /* ============ Loading ============ */
+    .analysis-loading { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+    .loading-brand { font-size: 14px; color: var(--neon-green); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    .loading-title { font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 40px; text-align: center; }
+    .loading-steps { width: 100%; max-width: 480px; }
+    .step { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border-color); }
+    .step:last-child { border-bottom: none; }
+    .step-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .step-pending .step-icon { border: 2px solid var(--border-color); color: var(--text-tertiary); }
+    .step-active .step-icon { border: 2px solid var(--neon-green); color: var(--neon-green); animation: pulse 1s infinite; }
+    .step-done .step-icon { background: var(--neon-green); color: #000; border: none; }
+    .step-label { font-size: 14px; font-weight: 500; }
+    .step-pending .step-label { color: var(--text-tertiary); }
+    .step-active .step-label { color: var(--text-primary); }
+    .step-done .step-label { color: var(--neon-green); }
+    .step-time { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(145,213,0,0.4); } 50% { box-shadow: 0 0 0 8px rgba(145,213,0,0); } }
+
+    .loading-queries { margin-top: 32px; width: 100%; max-width: 480px; }
+    .loading-queries h4 { font-size: 12px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .query-tag { display: inline-block; padding: 4px 10px; margin: 3px; background: rgba(145,213,0,0.08); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; color: var(--text-secondary); }
+
+    /* ============ Hero Summary ============ */
+    .hero-summary { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); border: var(--border-neon); border-radius: var(--border-radius); padding: 32px; margin-bottom: 32px; box-shadow: var(--shadow-neon); }
+    .hero-headline { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1.5; margin-bottom: 20px; }
+    .hero-headline .hl-brand { color: var(--neon-green); }
+    .hero-headline .hl-bad { color: var(--red); }
+    .hero-headline .hl-good { color: var(--neon-green); }
+    .hero-highlights { display: flex; gap: 16px; flex-wrap: wrap; }
+    .hero-highlight { flex: 1; min-width: 200px; padding: 12px 16px; background: rgba(145,213,0,0.05); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; color: var(--text-secondary); }
+    .hero-highlight .hi-icon { margin-right: 8px; }
+
+    /* ============ Results Nav ============ */
+    .nav-search { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .nav-search input { padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 12px; font-family: inherit; width: 160px; }
+    .nav-search input:focus { outline: none; border-color: var(--neon-green); }
+    .nav-search button { padding: 6px 12px; background: var(--neon-green); color: #000; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+
+    /* ============ Results context ============ */
+    .results-context { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .context-brand { font-size: 20px; font-weight: 700; color: var(--neon-green); }
+    .context-sep { color: var(--border-color); }
+    .context-queries { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ============ Dashboard ============ */
+    .metric-value { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+    .metric-value .value { font-size: 36px; font-weight: 700; color: var(--neon-green); text-shadow: 0 0 10px rgba(191,255,0,0.4); }
+    .trend { font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: rgba(191,255,0,0.1); }
+    .metric-header h3 { font-size: 16px; font-weight: 700; color: var(--neon-green); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .metric-description { font-size: 13px; color: var(--text-tertiary); }
+    .metric-footer { font-size: 12px; color: var(--text-tertiary); margin-top: 12px; }
+    .platform-card { text-align: center; cursor: pointer; }
+    .platform-card h4 { font-size: 12px; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .platform-icon { font-size: 28px; margin-bottom: 12px; }
+    .coverage-value { font-size: 28px; font-weight: 700; color: var(--accent-yellow); margin-bottom: 8px; }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 700; color: var(--accent-yellow); margin-bottom: 8px; }
+    .stat-meta { font-size: 13px; color: var(--text-tertiary); }
+    .chart-wrap { background: var(--black-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; }
+    .chart-container { position: relative; height: 300px; }
+    .trend-badge { font-weight: 700; font-size: 16px; }
+    .query-name { font-weight: 500; }
+    .top-query .query-name { color: var(--accent-yellow); font-weight: 600; }
+
+    /* ============ Readiness ============ */
+    .score-circle { width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--neon-green); border-radius: 50%; font-size: 32px; font-weight: 700; color: var(--neon-green); margin: 0 auto 16px; }
+    .score-status { font-size: 16px; font-weight: 600; color: var(--neon-green); text-align: center; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .card-header h3 { font-size: 15px; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 0.5px; }
+    .score-badge { background: transparent; color: var(--accent-yellow); padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; border: 1px solid var(--accent-yellow); }
+    .eval-items { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .eval-items li { font-size: 13px; padding: 4px 0; }
+    .eval-items .positive { color: var(--neon-green); }
+    .eval-items .caution { color: var(--accent-yellow); }
+    .improvement-item { display: flex; gap: 16px; align-items: flex-start; }
+    .improvement-item.priority-high { border-left: 4px solid var(--red); background: rgba(255,68,68,0.05); }
+    .improvement-item.priority-medium { border-left: 4px solid var(--accent-yellow); background: rgba(253,224,82,0.05); }
+    .priority-badge { min-width: 50px; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; border: 1px solid; }
+    .priority-high .priority-badge { color: var(--red); border-color: var(--red); }
+    .priority-medium .priority-badge { color: var(--accent-yellow); border-color: var(--accent-yellow); }
+    .item-content { flex: 1; }
+    .item-content h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--neon-green); text-transform: uppercase; }
+    .item-content p { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+    .impact { display: inline-block; background: rgba(145,213,0,0.1); color: var(--neon-green); padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; border: 1px solid var(--neon-green); }
+    .timeline { display: flex; flex-direction: column; gap: 24px; position: relative; padding-left: 40px; }
+    .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--neon-green), var(--accent-yellow)); }
+    .timeline-item { position: relative; }
+    .timeline-marker { position: absolute; left: -40px; top: 0; width: 30px; height: 30px; background: var(--neon-green); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; border: 3px solid var(--black-bg); }
+    .timeline-content ul { list-style: none; }
+    .timeline-content h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--neon-green); text-transform: uppercase; }
+    .timeline-content li { font-size: 13px; color: var(--text-secondary); padding: 4px 0 4px 16px; position: relative; }
+    .timeline-content li::before { content: '→'; position: absolute; left: 0; color: var(--neon-green); font-weight: 700; }
+    .improvements-list { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ============ Competitive ============ */
+    .rank-number { font-size: 48px; font-weight: 700; color: var(--neon-green); }
+    .rank-label { font-size: 12px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 700; margin-top: 4px; }
+    .overview-stat { font-size: 16px; color: var(--text-secondary); margin-top: 12px; font-weight: 500; }
+    .overview-card { text-align: center; }
+    .your-brand { border-left: 3px solid var(--neon-green); }
+    .your-brand td { background: rgba(145,213,0,0.03); }
+    .opportunity-card { border-left: 4px solid var(--border-color); }
+    .opportunity-card h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+    .opportunity-card.priority-high { border-left-color: var(--red); }
+    .opportunity-card.priority-high h4 { color: var(--red); }
+    .opportunity-card.priority-medium { border-left-color: var(--accent-yellow); }
+    .opportunity-card.priority-medium h4 { color: var(--accent-yellow); }
+    .opportunity-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .opportunity-desc { font-size: 13px; color: var(--text-secondary); }
+    .strategy-phase h3 { font-size: 15px; font-weight: 700; color: var(--neon-green); margin-bottom: 16px; text-transform: uppercase; }
+    .strategy-phase ul { list-style: none; }
+    .strategy-phase li { font-size: 13px; color: var(--text-secondary); padding: 6px 0 6px 16px; position: relative; }
+    .strategy-phase li::before { content: '→'; position: absolute; left: 0; color: var(--neon-green); font-weight: 700; }
+
+    /* ============ CTA ============ */
+    .cta-section { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; text-align: center; }
+    .cta-section h3 { font-size: 20px; font-weight: 700; color: var(--neon-green); margin-bottom: 12px; }
+    .cta-section p { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-cta { padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; transition: all 0.2s; border: none; font-family: inherit; }
+    .btn-cta-primary { background: var(--neon-green); color: #000; }
+    .btn-cta-primary:hover { background: var(--neon-bright); box-shadow: var(--shadow-glow); }
+    .btn-cta-secondary { background: transparent; color: var(--neon-green); border: 2px solid var(--neon-green); }
+    .btn-cta-secondary:hover { background: rgba(145,213,0,0.1); }
+
+    /* ============ Tabs ============ */
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 32px; background: var(--black-card); padding: 4px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+    .tab-btn { flex: 1; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text-tertiary); background: none; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; font-family: inherit; }
+    .tab-btn:hover { color: var(--text-primary); background: rgba(145,213,0,0.05); }
+    .tab-btn.active { color: #000; background: var(--neon-green); }
+
+    /* ============ Lightbox ============ */
+    .lightbox-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 40px; cursor: pointer; }
+    .lightbox-content { max-width: 960px; width: 100%; background: var(--black-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; cursor: default; }
+    .lightbox-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+    .lightbox-header h4 { font-size: 14px; color: var(--neon-green); text-transform: uppercase; }
+    .lightbox-close { background: none; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer; padding: 4px 8px; }
+    .lightbox-close:hover { color: var(--text-primary); }
+    .lightbox-body { padding: 0; }
+    .lightbox-body img, .lightbox-body object { width: 100%; display: block; }
+    .lightbox-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-tertiary); }
+
+    /* ============ Screenshot link ============ */
+    .screenshot-link { color: var(--neon-green); cursor: pointer; font-size: 12px; text-decoration: none; opacity: 0.7; transition: opacity 0.2s; }
+    .screenshot-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* ============ PDF button ============ */
+    .btn-pdf { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: transparent; color: var(--accent-yellow); border: 2px solid var(--accent-yellow); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; font-family: inherit; }
+    .btn-pdf:hover { background: rgba(253,224,82,0.1); box-shadow: 0 0 12px rgba(253,224,82,0.3); }
+
+    /* ============ Report actions bar ============ */
+    .report-actions { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 24px; }
+
+    @media (max-width: 768px) {
+        .landing h1 { font-size: 32px; }
+        .nav-search { display: none; }
+        .hero-highlights { flex-direction: column; }
+        .hero-headline { font-size: 18px; }
+    }
+    @media (max-width: 480px) {
+        .landing h1 { font-size: 24px; }
+        .tab-btn { font-size: 11px; padding: 10px 8px; }
+        .form-input { font-size: 16px; }
+    }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+    // ============ State ============
+    const STATE = { page: 'landing', tab: 'dashboard', brand: '', queries: [], competitors: [], data: null };
+
+    function navigate(page, opts = {}) {
+        Object.assign(STATE, opts, { page });
+        render();
+    }
+
+    function render() {
+        const app = document.getElementById('app');
+        switch (STATE.page) {
+            case 'landing': app.innerHTML = renderLanding(); bindLanding(); break;
+            case 'loading': app.innerHTML = renderLoading(); startLoading(); break;
+            case 'results': app.innerHTML = renderResults(); bindResults(); break;
+        }
+    }
+
+    // ============ Landing ============
+    function renderLanding() {
+        return `
+        <div class="landing">
+            <div class="landing-logo">GEO Analyzer</div>
+            <h1>你的品牌在 <span>AI 搜尋</span><br>被看見了嗎？</h1>
+            <p class="tagline">輸入品牌名稱，即時分析在 ChatGPT、Perplexity、Gemini 等 AI 平台的引用表現</p>
+
+            <form class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label class="form-label">品牌名稱</label>
+                    <input class="form-input" id="inputBrand" type="text" placeholder="輸入你的品牌名稱" required autofocus>
+                </div>
+
+                <button type="button" class="advanced-toggle" id="advToggle">
+                    <span class="arrow">▶</span> 進階選項（關鍵詞、競品）
+                </button>
+
+                <div class="advanced-fields" id="advFields">
+                    <div class="form-group">
+                        <label class="form-label">分析關鍵詞 <span style="color:var(--text-tertiary)">選填</span></label>
+                        <input class="form-input form-input-sm" id="inputQueries" type="text" placeholder="逗號分隔，例如：AI 行銷工具, SEO 自動化">
+                        <div class="form-hint">不填的話，系統會根據品牌名稱自動生成相關查詢</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">競品名稱 <span style="color:var(--text-tertiary)">選填</span></label>
+                        <input class="form-input form-input-sm" id="inputCompetitors" type="text" placeholder="逗號分隔，例如：HubSpot, SEMrush">
+                    </div>
+                </div>
+
+                <button class="btn-analyze" type="submit">開始分析</button>
+            </form>
+
+            <div class="demo-note">
+                <a href="#" id="tryDemo">試試看：分析 ChannelLab 的 AI 可見度 →</a>
+            </div>
+        </div>`;
+    }
+
+    function bindLanding() {
+        const toggle = document.getElementById('advToggle');
+        const fields = document.getElementById('advFields');
+        toggle.addEventListener('click', () => {
+            toggle.classList.toggle('open');
+            fields.classList.toggle('open');
+        });
+
+        document.getElementById('searchForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const brand = document.getElementById('inputBrand').value.trim();
+            if (!brand) return;
+            const queriesVal = document.getElementById('inputQueries').value;
+            const compsVal = document.getElementById('inputCompetitors').value;
+            const queries = queriesVal ? queriesVal.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10) : [];
+            const competitors = compsVal ? compsVal.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5) : [];
+            navigate('loading', { brand, queries, competitors });
+        });
+
+        document.getElementById('tryDemo').addEventListener('click', e => {
+            e.preventDefault();
+            navigate('loading', {
+                brand: 'ChannelLab',
+                queries: ['台灣 AI 行銷顧問', 'GEO 優化是什麼', 'AI 搜尋引擎優化服務', '品牌 AI 可見度提升', 'ChatGPT 品牌引用策略'],
+                competitors: ['Neil Patel Digital', 'HubSpot', 'SEMrush', 'Moz']
+            });
+        });
+    }
+
+    // ============ Loading ============
+    function renderLoading() {
+        const steps = [
+            { icon: '🔍', label: '掃描 Perplexity...' },
+            { icon: '✨', label: '掃描 Gemini...' },
+            { icon: '🤖', label: '掃描 ChatGPT...' },
+            { icon: '🧠', label: '語意情感分析...' },
+            { icon: '📊', label: '生成分析報告...' },
+        ];
+        return `
+        <div class="analysis-loading">
+            <div class="loading-brand">${STATE.brand}</div>
+            <div class="loading-title">正在分析 AI 可見度...</div>
+            <div class="loading-steps">
+                ${steps.map((s, i) => `
+                <div class="step step-pending" id="step-${i}">
+                    <div class="step-icon">${s.icon}</div>
+                    <div class="step-label">${s.label}</div>
+                    <div class="step-time" id="step-time-${i}"></div>
+                </div>`).join('')}
+            </div>
+            ${STATE.queries.length ? `
+            <div class="loading-queries">
+                <h4>分析關鍵詞</h4>
+                ${STATE.queries.map(q => `<span class="query-tag">${q}</span>`).join('')}
+            </div>` : ''}
+        </div>`;
+    }
+
+    function startLoading() {
+        const apiUrl = `/api/analyze?brand=${encodeURIComponent(STATE.brand)}&queries=${encodeURIComponent(STATE.queries.join(','))}&competitors=${encodeURIComponent(STATE.competitors.join(','))}`;
+        const apiPromise = fetch(apiUrl)
+            .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
+            .then(d => { if (d.error) throw new Error(d.error); return d; })
+            .catch(() => fetch('data/mock_data.json').then(r => r.json()));
+
+        let current = 0;
+        const total = 5;
+        const interval = setInterval(() => {
+            if (current > 0) {
+                const prev = document.getElementById(`step-${current-1}`);
+                if (prev) {
+                    prev.className = 'step step-done';
+                    prev.querySelector('.step-icon').textContent = '✓';
+                    document.getElementById(`step-time-${current-1}`).textContent = (0.4 + Math.random() * 1.0).toFixed(1) + 's';
+                }
+            }
+            if (current < total) {
+                const el = document.getElementById(`step-${current}`);
+                if (el) el.className = 'step step-active';
+            }
+            current++;
+            if (current > total) {
+                clearInterval(interval);
+                apiPromise.then(data => {
+                    substituteData(data);
+                    STATE.data = data;
+                    setTimeout(() => navigate('results'), 400);
+                });
+            }
+        }, 650);
+    }
+
+    function substituteData(data) {
+        const orig = data.brand;
+        const origComps = [...(data.competitors || [])];
+        data.brand = STATE.brand;
+
+        // Competitive table "you" row + competitor rows
+        const ct = data.competitive && data.competitive.competitors_table;
+        if (ct) ct.forEach(r => { if (r.is_you) r.brand = STATE.brand + ' (你)'; });
+
+        // Top queries substitution if user provided custom queries
+        if (STATE.queries.length && data.dashboard && data.dashboard.top_queries) {
+            const tq = data.dashboard.top_queries;
+            STATE.queries.forEach((q, i) => { if (i < tq.length) tq[i].query = q; });
+            if (STATE.queries.length < tq.length) data.dashboard.top_queries = tq.slice(0, Math.max(STATE.queries.length, 5));
+        }
+
+        // Competitors substitution
+        const actualComps = STATE.competitors.length ? STATE.competitors : origComps;
+        if (STATE.competitors.length) {
+            data.competitors = STATE.competitors;
+            if (ct) {
+                let ci = 0;
+                ct.forEach(r => { if (!r.is_you && ci < STATE.competitors.length) { r.brand = STATE.competitors[ci++]; } });
+            }
+            if (data.competitive && data.competitive.leader) {
+                data.competitive.leader.name = STATE.competitors[0];
+            }
+        }
+
+        // Headline: replace brand + competitor names
+        if (data.summary && data.summary.headline) {
+            let hl = data.summary.headline.replace(orig, STATE.brand);
+            for (const oc of origComps) {
+                if (hl.includes(oc) && actualComps.length) {
+                    hl = hl.replace(oc, actualComps[0]);
+                    break;
+                }
+            }
+            data.summary.headline = hl;
+        }
+    }
+
+    // ============ Results ============
+    function renderResults() {
+        if (!STATE.data) return '';
+        const s = STATE.data.summary;
+        return `
+        <nav class="nav-bar">
+            <div class="nav-inner">
+                <a class="nav-brand" href="#" id="navHome">GEO Analyzer</a>
+                <div class="nav-search">
+                    <input type="text" id="navSearchInput" placeholder="分析其他品牌...">
+                    <button id="navSearchBtn">分析</button>
+                </div>
+            </div>
+        </nav>
+        <div class="page-container">
+            <!-- Context -->
+            <div class="results-context">
+                <span class="context-brand">${STATE.brand}</span>
+                ${STATE.queries.length ? `<span class="context-sep">|</span>
+                <div class="context-queries">${STATE.queries.slice(0,5).map(q => `<span class="query-tag">${q}</span>`).join('')}</div>` : ''}
+            </div>
+
+            <!-- Hero Summary -->
+            <div class="hero-summary">
+                <div class="hero-headline">${formatHeadline(s.headline, STATE.brand)}</div>
+                <div class="hero-highlights">
+                    ${s.highlights.map(h => `
+                    <div class="hero-highlight"><span class="hi-icon">${h.icon}</span>${h.text}</div>`).join('')}
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <button class="tab-btn ${STATE.tab==='dashboard'?'active':''}" data-tab="dashboard">📊 總覽</button>
+                <button class="tab-btn ${STATE.tab==='readiness'?'active':''}" data-tab="readiness">🎯 AI-Readiness</button>
+                <button class="tab-btn ${STATE.tab==='competitive'?'active':''}" data-tab="competitive">⚔️ 競品分析</button>
+            </div>
+
+            <div id="tabContent">${renderTab()}</div>
+        </div>`;
+    }
+
+    function formatHeadline(text, brand) {
+        return text
+            .replace(brand, `<span class="hl-brand">${brand}</span>`)
+            .replace(/落後[^，,]+/g, m => `<span class="hl-bad">${m}</span>`)
+            .replace(/領先[^，,]+/g, m => `<span class="hl-good">${m}</span>`);
+    }
+
+    function renderTab() {
+        switch (STATE.tab) {
+            case 'dashboard': return renderDashboard();
+            case 'readiness': return renderReadiness();
+            case 'competitive': return renderCompetitive();
+        }
+    }
+
+    function bindResults() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                STATE.tab = btn.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tabContent').innerHTML = renderTab();
+                afterTabRender();
+            });
+        });
+        document.getElementById('navHome').addEventListener('click', e => { e.preventDefault(); navigate('landing'); });
+        document.getElementById('navSearchBtn').addEventListener('click', () => {
+            const v = document.getElementById('navSearchInput').value.trim();
+            if (v) navigate('loading', { brand: v, queries: [], competitors: [] });
+        });
+        document.getElementById('navSearchInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('navSearchBtn').click();
+        });
+        afterTabRender();
+    }
+
+    function afterTabRender() { if (STATE.tab === 'dashboard') renderTrendChart(); }
+
+    // ============ Dashboard Tab ============
+    function renderDashboard() {
+        const d = STATE.data.dashboard;
+        const posLabel = {first:'首位',second:'2-3 位',third:'末段'};
+        const trendIcon = {up:'↑',down:'↓',flat:'→'};
+        const statusLabel = {excellent:'優秀',good:'良好',warning:'待改善'};
+        return `
+        <div class="grid-3 mb-40">
+            ${metricCard('AI CITATION RATE','品牌在目標查詢中被 AI 引用的比率',d.citation_rate,d.citation_rate_trend,`上月: ${d.citation_rate_prev}%`)}
+            ${metricCard('SHARE OF VOICE','品牌 vs 競品在 AI 回覆中的佔比',d.share_of_voice,d.sov_trend,`排名: 第 ${d.sov_rank} 位 (${d.sov_rank_label})`)}
+            ${metricCard('QUERY COVERAGE','目標查詢中品牌出現的比例',d.query_coverage,d.query_coverage_trend,`覆蓋: ${d.query_coverage} / ${d.query_total}`)}
+        </div>
+        <h2 class="section-title">各平台覆蓋率</h2>
+        <div class="grid-6 mb-40">
+            ${d.platforms.map(p => `
+            <div class="card platform-card">
+                <div class="platform-icon">${p.icon}</div>
+                <h4>${p.name}</h4>
+                <div class="coverage-value">${p.coverage}%</div>
+                <div class="bar-track" style="height:6px"><div class="bar-fill" style="width:${p.coverage}%"></div></div>
+            </div>`).join('')}
+        </div>
+        <div class="chart-wrap mb-40">
+            <h2 class="section-title">CITATION RATE 趨勢</h2>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
+        </div>
+        <h2 class="section-title">本月重點指標</h2>
+        <div class="grid-4 mb-40">
+            ${d.quick_stats.map(s => `
+            <div class="card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-meta">${s.meta}</div></div>`).join('')}
+        </div>
+        ${renderSourceDomains()}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <h2 class="section-title" style="margin-bottom:0">查詢排名</h2>
+            <div class="report-actions">
+                <button class="btn-pdf" onclick="exportPDF()">📄 匯出 PDF 報告</button>
+            </div>
+        </div>
+        <div class="card mb-40" style="padding:0;overflow:hidden;">
+            <table class="data-table">
+                <thead><tr><th>查詢</th><th>引用次數</th><th>位置</th><th>趨勢</th><th>狀態</th><th>證據</th></tr></thead>
+                <tbody>
+                ${d.top_queries.map((q,i) => `
+                <tr class="${i===0?'top-query':''}">
+                    <td class="query-name">${q.query}</td>
+                    <td>${q.citations.toLocaleString()}</td>
+                    <td><span class="badge badge-${q.position}">${posLabel[q.position]||q.position}</span></td>
+                    <td><span class="trend-badge trend-${q.trend}">${trendIcon[q.trend]}</span></td>
+                    <td><span class="status status-${q.status}">${statusLabel[q.status]}</span></td>
+                    <td>${q.screenshot ? `<span class="screenshot-link" onclick="openLightbox('${q.query}','${q.screenshot}')">🖼 截圖</span>` : '—'}</td>
+                </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+        <div class="cta-section mb-40">
+            <h3>下一步：提升被 AI 引用的機率</h3>
+            <p>你的 AI-Readiness 評分是 ${STATE.data.ai_readiness.overall_score}/100，還有提升空間</p>
+            <div class="cta-buttons">
+                <button class="btn-cta btn-cta-primary" onclick="switchTab('readiness')">查看改善建議 →</button>
+                <button class="btn-cta btn-cta-secondary" onclick="switchTab('competitive')">看競品在做什麼</button>
+            </div>
+        </div>`;
+    }
+
+    function renderSourceDomains() {
+        const domains = STATE.data.source_domains;
+        if (!domains || Object.keys(domains).length === 0) return '';
+        const entries = Object.entries(domains);
+        const total = entries.reduce((s, [, c]) => s + c, 0);
+        const top = entries.slice(0, 10);
+        const maxCount = top[0]?.[1] || 1;
+
+        return `
+        <h2 class="section-title">AI 引用來源分析</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin:-16px 0 20px">AI 平台從哪些網站取得資訊來回覆使用者？這決定了你的品牌能不能被引用。</p>
+        <div class="card mb-40">
+            <div style="display:flex;gap:32px;flex-wrap:wrap">
+                <div style="flex:2;min-width:300px">
+                    ${top.map(([domain, count]) => {
+                        const pct = (count / total * 100).toFixed(1);
+                        const barW = (count / maxCount * 100).toFixed(0);
+                        const isBrand = domain.includes(STATE.brand.toLowerCase().replace(/\s/g,''));
+                        return `
+                        <div style="margin-bottom:12px">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                                <span style="font-size:13px;font-weight:${isBrand?'700':'500'};color:${isBrand?'var(--neon-green)':'var(--text-primary)'}">${domain}${isBrand?' ⭐':''}</span>
+                                <span style="font-size:12px;color:var(--text-tertiary)">${count} 次 (${pct}%)</span>
+                            </div>
+                            <div class="bar-track" style="height:6px"><div class="bar-fill" style="width:${barW}%;${isBrand?'background:var(--neon-green)':''}"></div></div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <div class="card" style="background:rgba(145,213,0,0.05);border-color:var(--neon-green)">
+                        <h4 style="font-size:12px;color:var(--neon-green);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">洞察</h4>
+                        <ul style="list-style:none;font-size:13px;color:var(--text-secondary)">
+                            <li style="margin-bottom:8px">→ <strong style="color:var(--text-primary)">${top[0]?.[0]}</strong> 是 AI 最常引用的來源</li>
+                            <li style="margin-bottom:8px">→ 要提升引用率，確保品牌內容出現在這些網站</li>
+                            <li>→ Reddit 和 Wikipedia 是 AI 的主要第三方來源</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function metricCard(title, desc, value, trend, footer) {
+        const sign = trend >= 0 ? '+' : '';
+        return `
+        <div class="card card-neon">
+            <div class="metric-header"><h3>${title}</h3><p class="metric-description">${desc}</p></div>
+            <div class="metric-value">
+                <span class="value">${value}%</span>
+                <span class="trend trend-${trend>=0?'up':'down'}">${trend>=0?'↑':'↓'} ${sign}${trend}%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.min(value,100)}%"></div></div>
+            <div class="metric-footer"><small>${footer}</small></div>
+        </div>`;
+    }
+
+    function renderTrendChart() {
+        const canvas = document.getElementById('trendChart');
+        if (!canvas) return;
+        const d = STATE.data.dashboard.trend_data;
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: { labels: d.labels, datasets: [{
+                label: 'Citation Rate (%)', data: d.values,
+                borderColor: '#BFFF00', backgroundColor: 'rgba(191,255,0,0.1)',
+                tension: 0.4, fill: true,
+                pointRadius: 6, pointBackgroundColor: '#BFFF00', pointBorderColor: '#000', pointBorderWidth: 2
+            }]},
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#BFFF00' } } },
+                scales: {
+                    y: { beginAtZero: true, max: 50, ticks: { callback: v => v+'%', color: '#BFFF00' }, grid: { color: 'rgba(191,255,0,0.1)' } },
+                    x: { ticks: { color: '#BFFF00' }, grid: { color: 'rgba(191,255,0,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // ============ Readiness Tab ============
+    function renderReadiness() {
+        const r = STATE.data.ai_readiness;
+        return `
+        <div class="page-header mb-40">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 style="font-size:32px">AI-READINESS</h1>
+                    <p class="subtitle">網站內容被 AI 引用的準備度</p>
+                </div>
+                <div><div class="score-circle">${r.overall_score}/100</div><p class="score-status">${r.status}</p></div>
+            </div>
+        </div>
+        <h2 class="section-title">評分維度</h2>
+        <div class="grid-2 mb-40">
+            ${r.dimensions.map(d => `
+            <div class="card">
+                <div class="card-header"><h3>${d.icon} ${d.name}</h3><span class="score-badge">${d.score}/10</span></div>
+                <div class="bar-track" style="margin-bottom:16px"><div class="bar-fill" style="width:${d.score*10}%"></div></div>
+                <ul class="eval-items">${d.items.map(i => `<li class="${i.type}">${i.type==='positive'?'✓':'⚠'} ${i.text}</li>`).join('')}</ul>
+            </div>`).join('')}
+        </div>
+        <h2 class="section-title">改善優先項</h2>
+        <div class="improvements-list mb-40">
+            ${r.improvements.map(imp => `
+            <div class="card improvement-item priority-${imp.priority}">
+                <div class="priority-badge">${imp.priority==='high'?'優先':'次要'}</div>
+                <div class="item-content"><h4>${imp.title}</h4><p>${imp.desc}</p><div class="impact">預期提升 ${imp.impact}</div></div>
+            </div>`).join('')}
+        </div>
+        <h2 class="section-title">30 天行動計畫</h2>
+        <div class="timeline mb-40">
+            ${r.action_plan.map(p => `
+            <div class="timeline-item">
+                <div class="timeline-marker">${p.phase.replace(/第\s*/,'').substring(0,3)}</div>
+                <div class="card timeline-content"><h4>${p.title}</h4><ul>${p.tasks.map(t => `<li>${t}</li>`).join('')}</ul></div>
+            </div>`).join('')}
+        </div>
+        <div class="cta-section mb-40">
+            <h3>想知道競品做了什麼？</h3>
+            <p>了解競品的 AI 可見度策略，找出超越機會</p>
+            <div class="cta-buttons">
+                <button class="btn-cta btn-cta-primary" onclick="switchTab('competitive')">查看競品分析 →</button>
+                <button class="btn-cta btn-cta-secondary" onclick="switchTab('dashboard')">回到總覽</button>
+            </div>
+        </div>`;
+    }
+
+    // ============ Competitive Tab ============
+    function renderCompetitive() {
+        const c = STATE.data.competitive;
+        const you = c.competitors_table.find(x => x.is_you);
+        return `
+        <div class="grid-3 mb-40">
+            <div class="card overview-card"><div class="rank-number">${c.your_rank}</div><div class="rank-label">你的排名</div><div class="overview-stat">Citation Rate: ${you.citation_rate}%</div></div>
+            <div class="card overview-card"><div class="rank-number">1</div><div class="rank-label">領先者：${c.leader.name}</div><div class="overview-stat">${c.leader.rate}% (差距 ${c.leader.gap}%)</div></div>
+            <div class="card overview-card"><div class="rank-number">${c.market_avg.vs_you}</div><div class="rank-label">vs 市場平均</div><div class="overview-stat">${c.market_avg.rate}%（你領先）</div></div>
+        </div>
+        <h2 class="section-title">競品排名</h2>
+        <div class="card mb-40" style="padding:0;overflow:hidden;">
+            <table class="data-table">
+                <thead><tr><th style="width:50px">#</th><th>品牌</th><th>Citation Rate</th><th>Share of Voice</th><th>Coverage</th><th>趨勢</th></tr></thead>
+                <tbody>
+                ${c.competitors_table.map(row => `
+                <tr class="${row.is_you?'your-brand':''}">
+                    <td>${row.rank}</td>
+                    <td style="color:var(--neon-green);font-weight:600">${row.is_you ? STATE.brand+' (你)' : row.brand}</td>
+                    <td>${row.is_you?'<strong>'+row.citation_rate+'%</strong>':row.citation_rate+'%'}</td>
+                    <td>${row.sov}%</td>
+                    <td>${row.coverage}%</td>
+                    <td class="${row.trend.startsWith('-')?'trend-down':'trend-up'}">${row.trend.startsWith('-')?'↓':'↑'} ${row.trend}</td>
+                </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+        <h2 class="section-title">超越機會</h2>
+        <div class="grid-4 mb-40">
+            ${c.opportunities.map(o => `
+            <div class="card opportunity-card priority-${o.priority}">
+                <h4>${o.priority==='high'?'🎯 高優先':'📌 中優先'}</h4>
+                <p class="opportunity-title">${o.title}</p>
+                <p class="opportunity-desc">${o.desc}</p>
+            </div>`).join('')}
+        </div>
+        <h2 class="section-title">90 天超越計畫</h2>
+        <div class="grid-3 mb-40">
+            ${c.strategy.map(s => `
+            <div class="card strategy-phase"><h3>${s.phase}：${s.title}</h3><ul>${s.tasks.map(t => `<li>${t}</li>`).join('')}</ul></div>`).join('')}
+        </div>
+        <div class="cta-section mb-40">
+            <h3>準備好超越競品了嗎？</h3>
+            <p>從 AI-Readiness 改善項目開始執行，30 天就能看到引用率提升</p>
+            <div class="cta-buttons">
+                <button class="btn-cta btn-cta-primary" onclick="navigate('landing')">分析其他品牌 →</button>
+                <button class="btn-cta btn-cta-secondary" onclick="switchTab('dashboard')">回到總覽</button>
+            </div>
+        </div>`;
+    }
+
+    // ============ Helpers ============
+    function switchTab(tab) {
+        STATE.tab = tab;
+        render();
+    }
+
+    // ============ Lightbox ============
+    function openLightbox(query, src) {
+        const isSvg = src.endsWith('.svg');
+        const overlay = document.createElement('div');
+        overlay.className = 'lightbox-overlay';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="lightbox-content">
+                <div class="lightbox-header">
+                    <h4>🖼 AI 回覆截圖 — ${query}</h4>
+                    <button class="lightbox-close" onclick="this.closest('.lightbox-overlay').remove()">✕</button>
+                </div>
+                <div class="lightbox-body">
+                    ${isSvg
+                        ? `<object data="${src}" type="image/svg+xml" style="width:100%;min-height:400px"></object>`
+                        : `<img src="${src}" alt="Screenshot: ${query}">`}
+                </div>
+                <div class="lightbox-footer">
+                    品牌：${STATE.brand} | 查詢：${query} | ${new Date().toLocaleDateString('zh-TW')}
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        // Close on Escape
+        const onKey = e => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
+        document.addEventListener('keydown', onKey);
+    }
+
+    // ============ PDF Export ============
+    function exportPDF() {
+        // Use browser print with a print-friendly layout
+        const style = document.createElement('style');
+        style.id = 'print-style';
+        style.textContent = `
+            @media print {
+                .nav-bar, .nav-search, .report-actions, .btn-cta, .cta-section, .tab-bar, .screenshot-link { display: none !important; }
+                body { background: #fff !important; color: #000 !important; }
+                .page-container { max-width: 100% !important; padding: 0 !important; }
+                .card, .hero-summary { background: #f9f9f9 !important; border-color: #ddd !important; box-shadow: none !important; color: #000 !important; }
+                .section-title, .card-header h3, .metric-header h3, h1, h2, h3, h4 { color: #111 !important; text-shadow: none !important; }
+                .metric-value .value, .coverage-value, .stat-value, .rank-number { color: #059669 !important; text-shadow: none !important; }
+                .hero-headline, .hero-headline .hl-brand { color: #000 !important; }
+                .hero-headline .hl-good { color: #059669 !important; }
+                .hero-headline .hl-bad { color: #dc2626 !important; }
+                .bar-fill { background: #059669 !important; box-shadow: none !important; }
+                .bar-track { background: #e5e7eb !important; border-color: #d1d5db !important; }
+                .badge, .status { border-color: #666 !important; }
+                .text-neon, .neon-glow, .trend-up { color: #059669 !important; }
+                .trend-down { color: #dc2626 !important; }
+                .data-table thead { background: #f3f4f6 !important; border-color: #d1d5db !important; }
+                .data-table th { color: #374151 !important; }
+                .hero-highlight { background: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #374151 !important; }
+                .results-context { margin-bottom: 16px !important; }
+                .context-brand { color: #059669 !important; }
+                .query-tag { background: #f3f4f6 !important; border-color: #d1d5db !important; color: #374151 !important; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                @page { margin: 1.5cm; size: A4; }
+                .page-container::before { content: 'GEO Analyzer Report — ${STATE.brand} — ${new Date().toLocaleDateString("zh-TW")}'; display: block; font-size: 10px; color: #9ca3af; margin-bottom: 16px; }
+            }
+        `;
+        document.head.appendChild(style);
+        window.print();
+        setTimeout(() => style.remove(), 1000);
+    }
+
+    // ============ Init ============
+    render();
+    </script>
+</body>
+</html>
