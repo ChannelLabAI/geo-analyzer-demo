@@ -107,7 +107,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         self.json_response(data)
 
     def run_live_analysis(self, brand, queries, competitors):
-        """Run Perplexity scraper via geo-analyzer and return results."""
+        """Run Google AIO + Perplexity scrapers via geo-analyzer."""
         venv_python = GEO_ANALYZER / ".venv" / "bin" / "python"
         screenshots_dir = str(DIR / "screenshots")
 
@@ -116,6 +116,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             "--brand", brand,
             "--queries", queries if queries else brand,
             "--screenshots-dir", screenshots_dir,
+            "--platforms", "google_aio,perplexity",
         ]
         if competitors:
             cmd.extend(["--competitors", competitors])
@@ -125,12 +126,11 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=180,
+                timeout=300,
                 cwd=str(GEO_ANALYZER),
             )
 
             if result.returncode != 0:
-                # Fall back to demo data with error note
                 self.return_demo_data(brand, queries, competitors)
                 return
 
@@ -141,28 +141,44 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             with open(mock_path, encoding="utf-8") as f:
                 template = json.load(f)
 
-            original_brand = template["brand"]
             template["brand"] = brand
             template["live_mode"] = True
 
-            # Update summary with real data
-            rate = live_data.get("citation_rate", 0)
-            template["summary"]["headline"] = (
-                f"{brand} 在 Perplexity 的 AI 引用率為 {rate}%"
-                f"（{live_data['mentioned_count']}/{live_data['queries_count']} 個查詢被引用）"
-            )
-            template["summary"]["verdict"] = "good" if rate >= 40 else "warning" if rate >= 20 else "bad"
-            template["summary"]["highlights"] = [
-                {"icon": "🔍", "text": f"Perplexity 掃描完成：{live_data['queries_count']} 個查詢"},
-                {"icon": "📊", "text": f"引用率 {rate}%，{'表現不錯' if rate >= 40 else '有提升空間'}"},
-                {"icon": "🔗", "text": f"引用來源 {len(live_data.get('source_domains', {}))} 個不同網域"},
-            ]
+            # Build platform stats from live data
+            pstats = live_data.get("platform_stats", {})
+            platforms_ui = []
+            highlights = []
+            total_mentioned = 0
+            total_queries = 0
 
-            # Update dashboard with real Perplexity data
-            template["dashboard"]["citation_rate"] = rate
-            template["dashboard"]["platforms"] = [
-                {"name": "Perplexity", "icon": "🔍", "coverage": rate}
-            ]
+            platform_icons = {"google_aio": "🔗", "perplexity": "🔍"}
+            platform_names = {"google_aio": "Google AI Overview", "perplexity": "Perplexity"}
+
+            for pname, stats in pstats.items():
+                rate = stats.get("citation_rate", 0)
+                platforms_ui.append({
+                    "name": platform_names.get(pname, pname),
+                    "icon": platform_icons.get(pname, "🤖"),
+                    "coverage": rate,
+                })
+                total_mentioned += stats.get("mentioned_count", 0)
+                total_queries += stats.get("queries_count", 0)
+
+                if pname == "google_aio":
+                    aio_count = stats.get("has_ai_overview_count", 0)
+                    highlights.append({"icon": "🔗", "text": f"Google AI Overview：{aio_count}/{stats['queries_count']} 個查詢出現 AI 概覽，引用率 {rate}%"})
+                elif pname == "perplexity":
+                    highlights.append({"icon": "🔍", "text": f"Perplexity：引用率 {rate}%"})
+
+            overall_rate = round(total_mentioned / total_queries * 100, 1) if total_queries > 0 else 0
+            highlights.append({"icon": "🔗", "text": f"引用來源 {len(live_data.get('source_domains', {}))} 個不同網域"})
+
+            template["summary"]["headline"] = f"{brand} 在 AI 搜尋的綜合引用率為 {overall_rate}%（{total_mentioned}/{total_queries} 個查詢被引用）"
+            template["summary"]["verdict"] = "good" if overall_rate >= 40 else "warning" if overall_rate >= 20 else "bad"
+            template["summary"]["highlights"] = highlights
+
+            template["dashboard"]["citation_rate"] = overall_rate
+            template["dashboard"]["platforms"] = platforms_ui
 
             # Inject source domains
             template["source_domains"] = live_data.get("source_domains", {})
