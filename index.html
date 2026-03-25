@@ -907,7 +907,7 @@
             ${sourceUrls.length > 0 ? `
             <div class="detail-sources">
                 <strong>引用來源：</strong>
-                ${sourceUrls.slice(0, 5).map(url => `<a href="${url}" target="_blank" rel="noopener">${shortenUrl(url)}</a>`).join(' · ')}
+                ${sourceUrls.slice(0, 5).map(url => { const safe = /^https?:\/\//i.test(url) ? url : '#'; return `<a href="${safe}" target="_blank" rel="noopener">${shortenUrl(url)}</a>`; }).join(' · ')}
                 ${sourceUrls.length > 5 ? ` <span style="color:var(--text-tertiary)">+${sourceUrls.length - 5} 更多</span>` : ''}
             </div>` : ''}
             ${screenshotPath ? `
@@ -1136,7 +1136,12 @@
     }
 
     function escapeAttr(str) {
-        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return (str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/'/g, "&#39;")
+            .replace(/"/g, '&quot;');
     }
 
     function escapeRegex(str) {

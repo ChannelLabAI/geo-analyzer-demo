@@ -194,7 +194,7 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_history_list(self, parsed):
         params = urllib.parse.parse_qs(parsed.query)
-        limit = int(params.get("limit", ["50"])[0])
+        limit = min(int(params.get("limit", ["50"])[0]), 200)
         records = get_history_list(limit)
         self.json_response(records)
 
@@ -456,7 +456,7 @@ def main():
     init_db()
     class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         daemon_threads = True
-    server = ThreadedServer(("0.0.0.0", PORT), GEOHandler)
+    server = ThreadedServer(("127.0.0.1", PORT), GEOHandler)
     mode = "LIVE" if LIVE_MODE else "DEMO"
     url = f"http://localhost:{PORT}/"
 
