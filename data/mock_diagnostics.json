@@ -1,0 +1,139 @@
+{
+  "url": "https://www.hubspot.com",
+  "crawler_check": {
+    "robots_url": "https://www.hubspot.com/robots.txt",
+    "robots_exists": true,
+    "crawlers": [
+      {"name": "GPTBot", "operator": "OpenAI", "tier": 1, "purpose": "ChatGPT Search + training", "status": "allowed"},
+      {"name": "OAI-SearchBot", "operator": "OpenAI", "tier": 1, "purpose": "ChatGPT Search only", "status": "allowed"},
+      {"name": "ChatGPT-User", "operator": "OpenAI", "tier": 1, "purpose": "User browsing", "status": "allowed"},
+      {"name": "ClaudeBot", "operator": "Anthropic", "tier": 1, "purpose": "Claude web search", "status": "allowed"},
+      {"name": "PerplexityBot", "operator": "Perplexity", "tier": 1, "purpose": "Perplexity Search", "status": "blocked"},
+      {"name": "Google-Extended", "operator": "Google", "tier": 2, "purpose": "Gemini training", "status": "allowed"},
+      {"name": "GoogleOther", "operator": "Google", "tier": 2, "purpose": "Google AI research", "status": "allowed_default"},
+      {"name": "Applebot-Extended", "operator": "Apple", "tier": 2, "purpose": "Apple Intelligence", "status": "allowed_default"},
+      {"name": "Amazonbot", "operator": "Amazon", "tier": 2, "purpose": "Alexa AI", "status": "allowed_default"},
+      {"name": "FacebookBot", "operator": "Meta", "tier": 2, "purpose": "Meta AI", "status": "blocked"},
+      {"name": "CCBot", "operator": "Common Crawl", "tier": 3, "purpose": "Training data", "status": "blocked"},
+      {"name": "anthropic-ai", "operator": "Anthropic", "tier": 3, "purpose": "Claude training", "status": "allowed"},
+      {"name": "Bytespider", "operator": "ByteDance", "tier": 3, "purpose": "TikTok AI", "status": "blocked"},
+      {"name": "cohere-ai", "operator": "Cohere", "tier": 3, "purpose": "Cohere training", "status": "allowed_default"}
+    ],
+    "sitemaps": ["https://www.hubspot.com/sitemap.xml"],
+    "summary": {"tier1_allowed": 4, "tier1_total": 5, "tier2_allowed": 4, "tier2_total": 5},
+    "score": 75,
+    "errors": []
+  },
+  "citability": {
+    "url": "https://www.hubspot.com",
+    "total_blocks": 18,
+    "average_score": 52.3,
+    "grade_distribution": {"A": 2, "B": 4, "C": 6, "D": 4, "F": 2},
+    "top_blocks": [
+      {
+        "heading": "What is HubSpot?",
+        "word_count": 142,
+        "total_score": 82,
+        "grade": "A",
+        "label": "Highly Citable",
+        "breakdown": {"answer_block_quality": 28, "self_containment": 22, "structural_readability": 16, "statistical_density": 10, "uniqueness_signals": 6},
+        "preview": "HubSpot is a leading CRM platform that provides software and support to help businesses grow..."
+      },
+      {
+        "heading": "Marketing Hub Features",
+        "word_count": 156,
+        "total_score": 76,
+        "grade": "B",
+        "label": "Good",
+        "breakdown": {"answer_block_quality": 24, "self_containment": 20, "structural_readability": 18, "statistical_density": 8, "uniqueness_signals": 6},
+        "preview": "Marketing Hub is a comprehensive marketing automation platform used by over 200,000 businesses worldwide..."
+      },
+      {
+        "heading": "HubSpot CRM Free Tools",
+        "word_count": 134,
+        "total_score": 71,
+        "grade": "B",
+        "label": "Good",
+        "breakdown": {"answer_block_quality": 22, "self_containment": 19, "structural_readability": 14, "statistical_density": 10, "uniqueness_signals": 6},
+        "preview": "HubSpot CRM is a free customer relationship management platform that helps businesses organize contacts..."
+      },
+      {
+        "heading": "Pricing Plans",
+        "word_count": 168,
+        "total_score": 68,
+        "grade": "B",
+        "label": "Good",
+        "breakdown": {"answer_block_quality": 20, "self_containment": 18, "structural_readability": 16, "statistical_density": 8, "uniqueness_signals": 6},
+        "preview": "HubSpot offers tiered pricing across its product suite. The Starter plan begins at $20/month per seat..."
+      },
+      {
+        "heading": "Customer Success Stories",
+        "word_count": 189,
+        "total_score": 65,
+        "grade": "B",
+        "label": "Good",
+        "breakdown": {"answer_block_quality": 18, "self_containment": 17, "structural_readability": 14, "statistical_density": 9, "uniqueness_signals": 7},
+        "preview": "Over 228,000 customers in more than 135 countries use HubSpot to grow their businesses..."
+      }
+    ],
+    "bottom_blocks": [
+      {
+        "heading": "Introduction",
+        "word_count": 45,
+        "total_score": 22,
+        "grade": "F",
+        "label": "Poor",
+        "breakdown": {"answer_block_quality": 5, "self_containment": 6, "structural_readability": 6, "statistical_density": 3, "uniqueness_signals": 2},
+        "preview": "Grow better with HubSpot. Software that's powerful, not overpowering. Seamlessly connect your data..."
+      },
+      {
+        "heading": "Footer Navigation",
+        "word_count": 38,
+        "total_score": 18,
+        "grade": "F",
+        "label": "Poor",
+        "breakdown": {"answer_block_quality": 3, "self_containment": 5, "structural_readability": 5, "statistical_density": 2, "uniqueness_signals": 3},
+        "preview": "About HubSpot Careers Blog Contact Us Customer Support Partners Investor Relations..."
+      },
+      {
+        "heading": "Integration Partners",
+        "word_count": 62,
+        "total_score": 34,
+        "grade": "D",
+        "label": "Low",
+        "breakdown": {"answer_block_quality": 8, "self_containment": 10, "structural_readability": 8, "statistical_density": 5, "uniqueness_signals": 3},
+        "preview": "Connect HubSpot to the tools you already use. Browse our marketplace of 1,500+ integrations..."
+      }
+    ],
+    "optimal_length_count": 4,
+    "errors": []
+  },
+  "llmstxt": {
+    "url": "https://www.hubspot.com",
+    "existing": {
+      "url": "https://www.hubspot.com/llms.txt",
+      "exists": false,
+      "format_valid": false,
+      "has_title": false,
+      "has_description": false,
+      "has_sections": false,
+      "has_links": false,
+      "section_count": 0,
+      "link_count": 0,
+      "issues": [],
+      "suggestions": [],
+      "full_exists": false
+    },
+    "generated_llmstxt": "# HubSpot\n> HubSpot is a leading CRM platform with marketing, sales, and customer service software for growing businesses.\n\n## Main Pages\n- [CRM Platform](https://www.hubspot.com/products/crm)\n- [Get Started Free](https://www.hubspot.com/get-started)\n- [Pricing](https://www.hubspot.com/pricing)\n- [Customers](https://www.hubspot.com/customers)\n\n## Products & Services\n- [Marketing Hub](https://www.hubspot.com/products/marketing)\n- [Sales Hub](https://www.hubspot.com/products/sales)\n- [Service Hub](https://www.hubspot.com/products/service)\n- [CMS Hub](https://www.hubspot.com/products/cms)\n- [Operations Hub](https://www.hubspot.com/products/operations)\n- [Commerce Hub](https://www.hubspot.com/products/commerce)\n\n## Resources & Blog\n- [HubSpot Blog](https://blog.hubspot.com)\n- [Academy](https://academy.hubspot.com)\n- [Developer Docs](https://developers.hubspot.com)\n- [Knowledge Base](https://knowledge.hubspot.com)\n\n## Company\n- [About Us](https://www.hubspot.com/our-story)\n- [Careers](https://www.hubspot.com/careers)\n- [Contact](https://www.hubspot.com/contact-sales)\n- [Partners](https://www.hubspot.com/partners)\n\n## Contact\n- Website: https://www.hubspot.com\n- Email: contact@hubspot.com\n",
+    "generated_llmstxt_full": "# HubSpot\n> HubSpot is a leading CRM platform with marketing, sales, and customer service software for growing businesses.\n\n## Products & Services\n- [Marketing Hub](https://www.hubspot.com/products/marketing): All-in-one marketing automation software including email, social, ads, and analytics.\n- [Sales Hub](https://www.hubspot.com/products/sales): Sales CRM software with email tracking, meeting scheduling, and pipeline management.\n- [Service Hub](https://www.hubspot.com/products/service): Customer service software with ticketing, knowledge base, and customer feedback tools.\n\n## Contact\n- Website: https://www.hubspot.com\n- Email: contact@hubspot.com\n",
+    "pages_analyzed": 24,
+    "sections": {
+      "Main Pages": 4,
+      "Products & Services": 8,
+      "Resources & Blog": 5,
+      "Company": 4,
+      "Support": 3
+    },
+    "errors": []
+  }
+}

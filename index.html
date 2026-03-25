@@ -195,6 +195,69 @@
     .history-item:hover .history-delete { opacity: 1; }
     .history-delete:hover { color: var(--red); }
 
+    /* ============ Website Diagnostics ============ */
+    .diag-section { margin-top: 48px; }
+    .diag-section .section-title { margin-bottom: 8px; }
+    .diag-section .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+    .diag-loading { text-align: center; padding: 32px; color: var(--text-tertiary); font-size: 14px; }
+    .diag-loading .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: var(--neon-green); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Crawler Check */
+    .crawler-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .crawler-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--black-hover); border: 1px solid var(--border-color); border-radius: 6px; }
+    .crawler-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .crawler-dot.allowed { background: var(--neon-green); box-shadow: 0 0 6px rgba(145,213,0,0.4); }
+    .crawler-dot.blocked { background: var(--red); box-shadow: 0 0 6px rgba(255,68,68,0.4); }
+    .crawler-dot.allowed_default { background: var(--amber); }
+    .crawler-info { flex: 1; min-width: 0; }
+    .crawler-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .crawler-meta { font-size: 11px; color: var(--text-tertiary); }
+    .crawler-score { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .crawler-score-num { font-size: 48px; font-weight: 700; }
+    .crawler-score-label { font-size: 13px; color: var(--text-secondary); }
+    .crawler-tier { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 16px; margin-bottom: 8px; }
+
+    /* Citability */
+    .citability-header { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+    .citability-score-ring { width: 100px; height: 100px; position: relative; }
+    .citability-score-ring svg { transform: rotate(-90deg); }
+    .citability-score-val { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 24px; font-weight: 700; color: var(--text-primary); }
+    .citability-stats { flex: 1; min-width: 200px; }
+    .citability-stats-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+    .citability-stats-row:last-child { border-bottom: none; }
+    .citability-grade-dist { display: flex; gap: 8px; margin-bottom: 20px; }
+    .citability-grade { text-align: center; flex: 1; padding: 8px; background: var(--black-hover); border-radius: 6px; }
+    .citability-grade-letter { font-size: 18px; font-weight: 700; }
+    .citability-grade-count { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .grade-A { color: var(--neon-green); }
+    .grade-B { color: var(--blue); }
+    .grade-C { color: var(--accent-yellow); }
+    .grade-D { color: var(--amber); }
+    .grade-F { color: var(--red); }
+    .citability-block { padding: 14px; background: var(--black-hover); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 10px; }
+    .citability-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .citability-block-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .citability-block-grade { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .citability-block-preview { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; }
+    .citability-dim { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .citability-dim-label { font-size: 11px; color: var(--text-secondary); min-width: 120px; }
+    .citability-dim-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .citability-dim-fill { height: 100%; border-radius: 3px; background: var(--neon-green); }
+    .citability-dim-val { font-size: 11px; color: var(--text-tertiary); min-width: 28px; text-align: right; }
+
+    /* llms.txt */
+    .llmstxt-status { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .llmstxt-badge { padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+    .llmstxt-badge.exists { background: rgba(145,213,0,0.15); color: var(--neon-green); }
+    .llmstxt-badge.missing { background: rgba(255,68,68,0.15); color: var(--red); }
+    .llmstxt-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .btn-download { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: transparent; border: 2px solid var(--neon-green); color: var(--neon-green); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; font-family: inherit; text-decoration: none; }
+    .btn-download:hover { background: rgba(145,213,0,0.1); box-shadow: 0 0 12px rgba(145,213,0,0.3); }
+    .llmstxt-preview { background: var(--black-hover); border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .llmstxt-sections { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .llmstxt-section-tag { padding: 4px 10px; background: rgba(145,213,0,0.08); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; color: var(--text-secondary); }
+
     /* ============ Responsive ============ */
     @media (max-width: 768px) {
         .landing h1 { font-size: 32px; }
@@ -225,7 +288,7 @@
 
     <script>
     // ============ State ============
-    const STATE = { page: 'landing', brand: '', queries: [], competitors: [], data: null, selectedQuery: null };
+    const STATE = { page: 'landing', brand: '', queries: [], competitors: [], data: null, selectedQuery: null, websiteUrl: '', diagnostics: null };
 
     function navigate(page, opts = {}) {
         Object.assign(STATE, opts, { page });
@@ -269,6 +332,11 @@
                         <label class="form-label">競品比較 <span style="color:var(--text-tertiary)">選填，最多 3 個</span></label>
                         <input class="form-input form-input-sm" id="inputCompetitors" type="text" placeholder="逗號分隔，例如：HubSpot, SEMrush, Moz">
                         <div class="form-hint">加入競品後，系統會用同一組查詢分析每個競品的 AI 引用表現</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">網站 URL <span style="color:var(--text-tertiary)">選填，用於網站診斷</span></label>
+                        <input class="form-input form-input-sm" id="inputWebsiteUrl" type="url" placeholder="https://www.example.com">
+                        <div class="form-hint">輸入品牌官網 URL，系統會同時進行 AI 爬蟲檢測、內容可引用性評分、llms.txt 分析</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">分析平台 <span style="color:var(--text-tertiary)">選填</span></label>
@@ -322,7 +390,8 @@
             if (document.getElementById('platPerplexity').checked) platforms.push('perplexity');
             if (document.getElementById('platGoogleAIO').checked) platforms.push('google_aio');
 
-            navigate('loading', { brand, queries, competitors, platforms: platforms.length ? platforms : ['gemini'] });
+            const websiteUrl = document.getElementById('inputWebsiteUrl').value.trim();
+            navigate('loading', { brand, queries, competitors, platforms: platforms.length ? platforms : ['gemini'], websiteUrl, diagnostics: null });
         });
 
         loadHistory();
@@ -404,6 +473,9 @@
         if (STATE.competitors.length) {
             STATE.competitors.forEach(c => { steps.push({ icon: '🏢', label: `分析競品 ${c}...` }); });
         }
+        if (STATE.websiteUrl) {
+            steps.push({ icon: '🔍', label: `診斷網站 ${STATE.websiteUrl}...` });
+        }
         steps.push({ icon: '📊', label: '生成分析報告...' });
 
         return `
@@ -455,6 +527,19 @@
                     if (err.name === 'AbortError') throw new Error('連線逾時，請確認網路狀態後重試');
                     throw err;
                 });
+
+        // Fire website diagnostics in parallel if URL provided
+        if (STATE.websiteUrl && !isStaticDeploy()) {
+            fetchWithTimeout(`/api/website-diagnostics?url=${encodeURIComponent(STATE.websiteUrl)}`, 120000)
+                .then(r => r.json())
+                .then(data => { STATE.diagnostics = data; })
+                .catch(err => { STATE.diagnostics = { error: err.message || 'Diagnostics failed' }; });
+        } else if (STATE.websiteUrl && isStaticDeploy()) {
+            fetch('data/mock_diagnostics.json?v=' + Date.now())
+                .then(r => r.json())
+                .then(data => { STATE.diagnostics = data; })
+                .catch(() => { STATE.diagnostics = { error: 'Mock diagnostics not available' }; });
+        }
 
         let apiDone = false, apiData = null, apiError = null;
         apiPromise
@@ -583,6 +668,9 @@
 
             <!-- Source Domains -->
             ${renderSourceDomains(d)}
+
+            <!-- Website Diagnostics -->
+            ${STATE.websiteUrl ? renderDiagnostics() : ''}
         </div>`;
     }
 
@@ -834,6 +922,205 @@
         document.getElementById('detailPanel').innerHTML = '';
     }
 
+    // ============ Website Diagnostics ============
+    function renderDiagnostics() {
+        const diag = STATE.diagnostics;
+        if (!diag) {
+            return `
+            <div class="diag-section">
+                <h2 class="section-title">網站 AI 診斷</h2>
+                <div class="card"><div class="diag-loading"><span class="spinner"></span>正在分析 ${escapeHtml(STATE.websiteUrl)}...</div></div>
+            </div>`;
+        }
+        if (diag.error) {
+            return `
+            <div class="diag-section">
+                <h2 class="section-title">網站 AI 診斷</h2>
+                <div class="card"><div style="padding:16px;color:var(--red);font-size:14px">⚠ 診斷失敗：${escapeHtml(diag.error)}</div></div>
+            </div>`;
+        }
+        return `
+            ${renderCrawlerCheck(diag)}
+            ${renderCitabilityScore(diag)}
+            ${renderLlmsTxtStatus(diag)}
+        `;
+    }
+
+    function renderCrawlerCheck(diag) {
+        const cc = diag.crawler_check;
+        if (!cc) return '';
+        const crawlers = cc.crawlers || [];
+        const score = cc.score || 0;
+        const scoreColor = score >= 70 ? 'var(--neon-green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
+
+        const tier1 = crawlers.filter(c => c.tier === 1);
+        const tier2 = crawlers.filter(c => c.tier === 2);
+        const tier3 = crawlers.filter(c => c.tier === 3);
+
+        function renderCrawlerTier(label, items) {
+            if (!items.length) return '';
+            return `
+                <div class="crawler-tier">${label}</div>
+                <div class="crawler-grid">
+                    ${items.map(c => `
+                    <div class="crawler-item">
+                        <div class="crawler-dot ${c.status}"></div>
+                        <div class="crawler-info">
+                            <div class="crawler-name">${escapeHtml(c.name)}</div>
+                            <div class="crawler-meta">${escapeHtml(c.operator)} · ${escapeHtml(c.purpose)}</div>
+                        </div>
+                    </div>`).join('')}
+                </div>`;
+        }
+
+        const statusLabels = { allowed: '✓ 允許', blocked: '✗ 封鎖', allowed_default: '○ 未設定（預設允許）' };
+        const allowed = crawlers.filter(c => c.status === 'allowed').length;
+        const blocked = crawlers.filter(c => c.status === 'blocked').length;
+
+        return `
+        <div class="diag-section">
+            <h2 class="section-title">AI 爬蟲存取狀態</h2>
+            <p class="section-desc">檢查 ${escapeHtml(STATE.websiteUrl)} 的 robots.txt，確認哪些 AI 平台的爬蟲被允許或封鎖存取你的網站。</p>
+            <div class="card mb-40">
+                <div class="crawler-score">
+                    <div class="crawler-score-num" style="color:${scoreColor}">${score}</div>
+                    <div>
+                        <div class="crawler-score-label">AI 爬蟲友善度分數</div>
+                        <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${allowed} 允許 · ${blocked} 封鎖 · ${crawlers.length - allowed - blocked} 未設定</div>
+                    </div>
+                </div>
+                ${renderCrawlerTier('Tier 1 — AI 搜尋引擎（最重要）', tier1)}
+                ${renderCrawlerTier('Tier 2 — 主要科技公司 AI', tier2)}
+                ${renderCrawlerTier('Tier 3 — 訓練資料爬蟲', tier3)}
+            </div>
+        </div>`;
+    }
+
+    function renderCitabilityScore(diag) {
+        const cit = diag.citability;
+        if (!cit) return '';
+        const avg = cit.average_score || 0;
+        const total = cit.total_blocks || 0;
+        const grades = cit.grade_distribution || {};
+        const top = cit.top_blocks || [];
+        const bottom = cit.bottom_blocks || [];
+
+        const circumference = 2 * Math.PI * 42;
+        const dashOffset = circumference * (1 - avg / 100);
+        const scoreColor = avg >= 70 ? 'var(--neon-green)' : avg >= 40 ? 'var(--amber)' : 'var(--red)';
+
+        const dimMaxes = { answer_block_quality: 30, self_containment: 25, structural_readability: 20, statistical_density: 15, uniqueness_signals: 10 };
+        const dimLabels = { answer_block_quality: '回答品質', self_containment: '自含性', structural_readability: '結構可讀性', statistical_density: '數據密度', uniqueness_signals: '獨特性' };
+
+        function renderBlock(block, showDims) {
+            const gradeClass = 'grade-' + block.grade;
+            return `
+            <div class="citability-block">
+                <div class="citability-block-header">
+                    <span class="citability-block-title">${escapeHtml(block.heading)}</span>
+                    <span class="citability-block-grade ${gradeClass}" style="background:rgba(255,255,255,0.05)">${block.grade} · ${block.total_score}分 · ${block.word_count}字</span>
+                </div>
+                ${showDims && block.breakdown ? Object.entries(block.breakdown).map(([dim, val]) => `
+                <div class="citability-dim">
+                    <span class="citability-dim-label">${dimLabels[dim] || dim}</span>
+                    <div class="citability-dim-bar"><div class="citability-dim-fill" style="width:${(val / (dimMaxes[dim] || 30) * 100).toFixed(0)}%"></div></div>
+                    <span class="citability-dim-val">${val}/${dimMaxes[dim] || '?'}</span>
+                </div>`).join('') : ''}
+                <div class="citability-block-preview">${escapeHtml(block.preview || '')}</div>
+            </div>`;
+        }
+
+        return `
+        <div class="diag-section">
+            <h2 class="section-title">內容可引用性評分 (Citability)</h2>
+            <p class="section-desc">分析頁面每個內容區塊被 AI 引用的可能性，基於 5 個維度評分：回答品質、自含性、結構可讀性、數據密度、獨特性。</p>
+            <div class="card mb-40">
+                <div class="citability-header">
+                    <div class="citability-score-ring">
+                        <svg width="100" height="100" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="${scoreColor}" stroke-width="8"
+                                stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" stroke-linecap="round"/>
+                        </svg>
+                        <div class="citability-score-val">${avg.toFixed(0)}</div>
+                    </div>
+                    <div class="citability-stats">
+                        <div class="citability-stats-row"><span style="color:var(--text-tertiary)">頁面網址</span><span>${escapeHtml(cit.url || STATE.websiteUrl)}</span></div>
+                        <div class="citability-stats-row"><span style="color:var(--text-tertiary)">內容區塊數</span><span>${total}</span></div>
+                        <div class="citability-stats-row"><span style="color:var(--text-tertiary)">平均分數</span><span style="color:${scoreColor};font-weight:700">${avg.toFixed(1)} / 100</span></div>
+                        <div class="citability-stats-row"><span style="color:var(--text-tertiary)">最佳字數區塊</span><span>${cit.optimal_length_count || 0} 個</span></div>
+                    </div>
+                </div>
+
+                <div class="citability-grade-dist">
+                    ${['A','B','C','D','F'].map(g => `
+                    <div class="citability-grade">
+                        <div class="citability-grade-letter grade-${g}">${g}</div>
+                        <div class="citability-grade-count">${grades[g] || 0}</div>
+                    </div>`).join('')}
+                </div>
+
+                ${top.length ? `<div class="crawler-tier" style="margin-top:20px">表現最佳區塊</div>` : ''}
+                ${top.map(b => renderBlock(b, true)).join('')}
+
+                ${bottom.length ? `<div class="crawler-tier" style="margin-top:20px">需要改善的區塊</div>` : ''}
+                ${bottom.map(b => renderBlock(b, false)).join('')}
+            </div>
+        </div>`;
+    }
+
+    function renderLlmsTxtStatus(diag) {
+        const llm = diag.llmstxt;
+        if (!llm) return '';
+        const existing = llm.existing || {};
+        const hasFile = existing.exists;
+        const sections = llm.sections || {};
+        const pagesAnalyzed = llm.pages_analyzed || 0;
+
+        return `
+        <div class="diag-section">
+            <h2 class="section-title">llms.txt 狀態</h2>
+            <p class="section-desc">llms.txt 是新興標準，告訴 AI 系統你的網站上最重要的內容。類似 robots.txt 但用途相反 — 主動邀請 AI 來讀取。</p>
+            <div class="card mb-40">
+                <div class="llmstxt-status">
+                    <span class="llmstxt-badge ${hasFile ? 'exists' : 'missing'}">${hasFile ? '✓ 已存在' : '✗ 未找到'}</span>
+                    <span style="font-size:13px;color:var(--text-secondary)">${hasFile ? existing.url : `${escapeHtml(STATE.websiteUrl)}/llms.txt 不存在`}</span>
+                </div>
+
+                ${hasFile && existing.format_valid ? `
+                <div style="margin-bottom:16px">
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">格式檢查：</div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px">
+                        <span style="color:${existing.has_title ? 'var(--neon-green)' : 'var(--red)'}">標題 ${existing.has_title ? '✓' : '✗'}</span>
+                        <span style="color:${existing.has_description ? 'var(--neon-green)' : 'var(--red)'}">描述 ${existing.has_description ? '✓' : '✗'}</span>
+                        <span style="color:${existing.has_sections ? 'var(--neon-green)' : 'var(--red)'}">章節 ${existing.has_sections ? '✓' : '✗'} (${existing.section_count || 0})</span>
+                        <span style="color:${existing.has_links ? 'var(--neon-green)' : 'var(--red)'}">連結 ${existing.has_links ? '✓' : '✗'} (${existing.link_count || 0})</span>
+                        <span style="color:${existing.full_exists ? 'var(--neon-green)' : 'var(--text-tertiary)'}">llms-full.txt ${existing.full_exists ? '✓' : '—'}</span>
+                    </div>
+                </div>` : ''}
+
+                <div style="margin-bottom:16px">
+                    <div style="font-size:13px;color:var(--neon-green);font-weight:600;margin-bottom:8px">系統為你生成的 llms.txt（${pagesAnalyzed} 頁分析）</div>
+                    ${Object.keys(sections).length ? `
+                    <div class="llmstxt-sections">
+                        ${Object.entries(sections).map(([name, count]) => `<span class="llmstxt-section-tag">${escapeHtml(name)} (${count})</span>`).join('')}
+                    </div>` : ''}
+                </div>
+
+                ${llm.generated_llmstxt ? `
+                <div style="margin-bottom:16px">
+                    <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.nextElementSibling.style.display==='none'?'▶ 預覽 llms.txt':'▼ 收合預覽'" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;font-family:inherit;padding:0;margin-bottom:8px">▶ 預覽 llms.txt</button>
+                    <div class="llmstxt-preview" style="display:none">${escapeHtml(llm.generated_llmstxt)}</div>
+                </div>` : ''}
+
+                <div class="llmstxt-actions">
+                    <a class="btn-download" href="/api/llmstxt-download?url=${encodeURIComponent(STATE.websiteUrl)}&type=llmstxt" download="llms.txt">⬇ 下載 llms.txt</a>
+                    <a class="btn-download" href="/api/llmstxt-download?url=${encodeURIComponent(STATE.websiteUrl)}&type=full" download="llms-full.txt">⬇ 下載 llms-full.txt</a>
+                </div>
+            </div>
+        </div>`;
+    }
+
     // ============ Utilities ============
     function highlightBrand(text, brand) {
         if (!brand || !text) return escapeHtml(text);
@@ -874,6 +1161,26 @@
         document.getElementById('navSearchInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') document.getElementById('navSearchBtn').click();
         });
+
+        // Poll for diagnostics if still loading
+        if (STATE.websiteUrl && !STATE.diagnostics) {
+            const diagPoll = setInterval(() => {
+                if (STATE.diagnostics && STATE.page === 'results') {
+                    clearInterval(diagPoll);
+                    // Re-render diagnostics sections in place
+                    const diagPlaceholder = document.querySelector('.diag-section');
+                    if (diagPlaceholder) {
+                        const container = diagPlaceholder.parentElement;
+                        const temp = document.createElement('div');
+                        temp.innerHTML = renderDiagnostics();
+                        // Replace old diag section(s) with new ones
+                        const oldSections = container.querySelectorAll('.diag-section');
+                        oldSections.forEach(s => s.remove());
+                        container.insertAdjacentHTML('beforeend', renderDiagnostics());
+                    }
+                }
+            }, 1000);
+        }
 
         // Load trend data async
         if (STATE.data?.brand && !isStaticDeploy()) {

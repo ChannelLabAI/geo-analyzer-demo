@@ -22,6 +22,8 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
+from website_diagnostics import run_all_diagnostics, generate_llmstxt
+
 PORT = 8080
 LIVE_MODE = False
 DIR = Path(__file__).parent.resolve()
@@ -169,6 +171,10 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_history_list(parsed)
         elif parsed.path == "/api/history/trend":
             self.handle_trend(parsed)
+        elif parsed.path == "/api/website-diagnostics":
+            self.handle_diagnostics(parsed)
+        elif parsed.path == "/api/llmstxt-download":
+            self.handle_llmstxt_download(parsed)
         elif re.match(r"^/api/history/[a-f0-9]+$", parsed.path):
             record_id = parsed.path.split("/")[-1]
             self.handle_history_detail(record_id)
@@ -207,6 +213,49 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             return
         points = get_brand_trend(brand)
         self.json_response({"brand": brand, "points": points})
+
+    def handle_diagnostics(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        url = params.get("url", [""])[0]
+        if not url or not url.startswith(("http://", "https://")):
+            self.json_response({"error": "Missing or invalid URL (must start with http:// or https://)"}, 400)
+            return
+        if LIVE_MODE:
+            try:
+                data = run_all_diagnostics(url)
+                self.json_response(data)
+            except Exception as e:
+                self.json_response({"error": str(e)}, 500)
+        else:
+            # Demo mode: return mock diagnostics
+            mock_path = DIR / "data" / "mock_diagnostics.json"
+            if mock_path.exists():
+                with open(mock_path, encoding="utf-8") as f:
+                    self.json_response(json.load(f))
+            else:
+                self.json_response({"error": "Mock diagnostics not available"}, 404)
+
+    def handle_llmstxt_download(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        url = params.get("url", [""])[0]
+        file_type = params.get("type", ["llmstxt"])[0]
+        if not url or not url.startswith(("http://", "https://")):
+            self.json_response({"error": "Missing or invalid URL"}, 400)
+            return
+        try:
+            data = generate_llmstxt(url)
+            content = data.get("generated_llmstxt_full" if file_type == "full" else "generated_llmstxt", "")
+            filename = "llms-full.txt" if file_type == "full" else "llms.txt"
+            body = content.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+        except Exception as e:
+            self.json_response({"error": str(e)}, 500)
 
     def handle_analyze(self, parsed):
         params = urllib.parse.parse_qs(parsed.query)
