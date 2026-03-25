@@ -22,7 +22,7 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
-from website_diagnostics import run_all_diagnostics, generate_llmstxt
+from website_diagnostics import run_all_diagnostics, generate_llmstxt, validate_url
 
 PORT = 8080
 LIVE_MODE = False
@@ -220,6 +220,10 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         if not url or not url.startswith(("http://", "https://")):
             self.json_response({"error": "Missing or invalid URL (must start with http:// or https://)"}, 400)
             return
+        ssrf_err = validate_url(url)
+        if ssrf_err:
+            self.json_response({"error": ssrf_err}, 400)
+            return
         if LIVE_MODE:
             try:
                 data = run_all_diagnostics(url)
@@ -241,6 +245,29 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         file_type = params.get("type", ["llmstxt"])[0]
         if not url or not url.startswith(("http://", "https://")):
             self.json_response({"error": "Missing or invalid URL"}, 400)
+            return
+        ssrf_err = validate_url(url)
+        if ssrf_err:
+            self.json_response({"error": ssrf_err}, 400)
+            return
+        if not LIVE_MODE:
+            # Demo mode: serve mock llms.txt from mock_diagnostics.json
+            mock_path = DIR / "data" / "mock_diagnostics.json"
+            content = "# Demo llms.txt\n> Switch to live mode for real generation.\n"
+            if mock_path.exists():
+                with open(mock_path, encoding="utf-8") as f:
+                    mock = json.load(f)
+                key = "generated_llmstxt_full" if file_type == "full" else "generated_llmstxt"
+                content = mock.get("llmstxt", {}).get(key, content)
+            filename = "llms-full.txt" if file_type == "full" else "llms.txt"
+            body = content.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
             return
         try:
             data = generate_llmstxt(url)

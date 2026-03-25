@@ -8,12 +8,33 @@ Provides three diagnostic functions that analyze a target website for GEO optimi
 All functions are stateless and safe to call from threads.
 """
 
+import ipaddress
 import re
+import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+
+
+def validate_url(url: str):
+    """SSRF guard: block private/internal IPs. Returns error string or None if safe."""
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return "Invalid URL: missing hostname"
+        if hostname.lower() in ("localhost", "0.0.0.0"):
+            return "URL points to a private/internal address"
+        ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            return "URL points to a private/internal address"
+    except socket.gaierror:
+        return "Cannot resolve hostname"
+    except ValueError:
+        return "Invalid IP address"
+    return None
 
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -97,8 +118,7 @@ def check_crawlers(url: str) -> dict:
                 agent_rules[current_agent].append(("Allow", path))
             elif lower.startswith("sitemap:"):
                 sitemap_url = line.split(":", 1)[1].strip()
-                if not sitemap_url.startswith("http"):
-                    sitemap_url = "http" + sitemap_url
+                sitemap_url = urljoin(base_url, sitemap_url)
                 result["sitemaps"].append(sitemap_url)
 
         # Determine status for each crawler
