@@ -56,7 +56,7 @@
     .query-tag { display: inline-block; padding: 4px 10px; margin: 3px; background: rgba(145,213,0,0.08); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; color: var(--text-secondary); }
 
     /* ============ Summary Banner ============ */
-    .summary-banner { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); border: var(--border-neon); border-radius: var(--border-radius); padding: 40px 32px; margin-bottom: 32px; box-shadow: var(--shadow-neon); text-align: center; }
+    .summary-banner { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); border: var(--border-neon); border-radius: var(--border-radius); padding: 28px 24px; margin-bottom: 32px; box-shadow: var(--shadow-neon); text-align: center; }
     .summary-rate { font-size: 72px; font-weight: 700; color: var(--neon-green); margin-bottom: 8px; text-shadow: 0 0 20px rgba(145,213,0,0.4); }
     .summary-headline { font-size: 18px; color: var(--text-secondary); margin-bottom: 16px; }
     .summary-verdict { display: inline-block; padding: 6px 16px; border-radius: 4px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
@@ -132,10 +132,10 @@
     .context-brand { font-size: 20px; font-weight: 700; color: var(--neon-green); }
     .context-sep { color: var(--border-color); }
     .context-queries { display: flex; gap: 6px; flex-wrap: wrap; }
-    .context-meta { font-size: 12px; color: var(--text-tertiary); margin-bottom: 24px; }
+    .context-meta { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
 
     /* ============ Report Actions ============ */
-    .report-actions { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 24px; }
+    .report-actions { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 12px; }
     .btn-pdf { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: transparent; color: var(--accent-yellow); border: 2px solid var(--accent-yellow); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; font-family: inherit; }
     .btn-pdf:hover { background: rgba(253,224,82,0.1); box-shadow: 0 0 12px rgba(253,224,82,0.3); }
 
@@ -258,6 +258,56 @@
     .llmstxt-sections { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
     .llmstxt-section-tag { padding: 4px 10px; background: rgba(145,213,0,0.08); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; color: var(--text-secondary); }
 
+    /* ============ Health Dashboard ============ */
+    .health-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .health-grade { display: flex; align-items: baseline; gap: 8px; }
+    .health-grade-letter { font-size: 48px; font-weight: 700; }
+    .health-grade-score { font-size: 20px; color: var(--text-secondary); }
+    .health-summary { font-size: 13px; color: var(--text-tertiary); }
+    .health-dims { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .health-dim { background: var(--black-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 12px; text-align: center; }
+    .health-dim-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .health-dim-score { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+    .health-dim-dots { display: flex; justify-content: center; gap: 4px; }
+    .health-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .health-dot.filled { background: var(--neon-green); box-shadow: 0 0 4px rgba(145,213,0,0.4); }
+    .health-dot.empty { background: rgba(255,255,255,0.12); }
+    @media (max-width: 768px) { .health-dims { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .health-dims { grid-template-columns: 1fr 1fr; } }
+
+    /* ============ Technical Signals ============ */
+    .tech-check { padding: 14px; background: var(--black-hover); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; }
+    .tech-check-header { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+    .tech-check-icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+    .tech-check-name { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; }
+    .tech-check-status { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tech-check-status.pass { background: rgba(145,213,0,0.12); color: var(--neon-green); }
+    .tech-check-status.warn { background: rgba(255,170,0,0.12); color: var(--amber); }
+    .tech-check-status.fail { background: rgba(255,68,68,0.12); color: var(--red); }
+    .tech-check-expand { font-size: 12px; color: var(--text-tertiary); margin-left: 4px; }
+    .tech-check-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); display: none; }
+    .tech-check-body.open { display: block; }
+    .tech-check-msg { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .tech-check-rec { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; }
+    .tech-snippet-wrap { position: relative; }
+    .tech-snippet { background: #1a2b42; border-radius: 6px; padding: 12px 14px; font-family: 'SF Mono','Fira Code',monospace; font-size: 11px; color: #a8d8ff; white-space: pre-wrap; overflow-x: auto; max-height: 200px; overflow-y: auto; }
+    .tech-snippet-copy { position: absolute; top: 8px; right: 8px; background: rgba(145,213,0,0.1); border: 1px solid rgba(145,213,0,0.3); color: var(--neon-green); border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .tech-snippet-copy:hover { background: rgba(145,213,0,0.2); }
+
+    /* ============ Quality Breakdown Bar ============ */
+    .quality-breakdown { margin-top: 16px; }
+    .quality-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .quality-bar-label { font-size: 12px; color: var(--text-secondary); min-width: 140px; }
+    .quality-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .quality-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .quality-bar-val { font-size: 12px; color: var(--text-tertiary); min-width: 36px; text-align: right; }
+
+    /* ============ Crawler HTTP Status ============ */
+    .crawler-http { font-size: 11px; margin-top: 2px; }
+    .crawler-http.ok { color: var(--neon-green); }
+    .crawler-http.warn { color: var(--amber); }
+    .crawler-http.fail { color: var(--red); }
+
     /* ============ Responsive ============ */
     @media (max-width: 768px) {
         .landing h1 { font-size: 32px; }
@@ -288,7 +338,7 @@
 
     <script>
     // ============ State ============
-    const STATE = { page: 'landing', brand: '', queries: [], competitors: [], data: null, selectedQuery: null, websiteUrl: '', diagnostics: null };
+    const STATE = { page: 'landing', brand: '', queries: [], competitors: [], data: null, selectedQuery: null, websiteUrl: '', diagnostics: null, siteAudit: null };
 
     function navigate(page, opts = {}) {
         Object.assign(STATE, opts, { page });
@@ -300,7 +350,7 @@
         switch (STATE.page) {
             case 'landing': app.innerHTML = renderLanding(); bindLanding(); break;
             case 'loading': app.innerHTML = renderLoading(); startLoading(); break;
-            case 'results': app.innerHTML = renderResults(); bindResults(); break;
+            case 'results': app.innerHTML = renderResults(); bindResults(); bindDiagnostics(); break;
         }
     }
 
@@ -528,17 +578,23 @@
                     throw err;
                 });
 
-        // Fire website diagnostics in parallel if URL provided
+        // Fire website diagnostics + site-audit in parallel if URL provided
         if (STATE.websiteUrl && !isStaticDeploy()) {
+            STATE.diagnostics = null;
+            STATE.siteAudit = null;
             fetchWithTimeout(`/api/website-diagnostics?url=${encodeURIComponent(STATE.websiteUrl)}`, 120000)
                 .then(r => r.json())
                 .then(data => { STATE.diagnostics = data; })
                 .catch(err => { STATE.diagnostics = { error: err.message || 'Diagnostics failed' }; });
+            fetchWithTimeout(`/api/site-audit?url=${encodeURIComponent(STATE.websiteUrl)}`, 60000)
+                .then(r => r.json())
+                .then(data => { STATE.siteAudit = data; })
+                .catch(() => { STATE.siteAudit = { error: 'site-audit failed' }; });
         } else if (STATE.websiteUrl && isStaticDeploy()) {
             fetch('data/mock_diagnostics.json?v=' + Date.now())
                 .then(r => r.json())
-                .then(data => { STATE.diagnostics = data; })
-                .catch(() => { STATE.diagnostics = { error: 'Mock diagnostics not available' }; });
+                .then(data => { STATE.diagnostics = data; STATE.siteAudit = null; })
+                .catch(() => { STATE.diagnostics = { error: 'Mock diagnostics not available' }; STATE.siteAudit = null; });
         }
 
         let apiDone = false, apiData = null, apiError = null;
@@ -678,7 +734,7 @@
         const s = d.summary;
         const verdictLabels = { good: '表現良好', warning: '有改善空間', bad: '需要關注' };
         return `
-        <div class="summary-banner mb-40">
+        <div class="summary-banner">
             <div class="summary-rate">${s.overall_rate}%</div>
             <div class="summary-headline">${d.brand} 在 AI 搜尋的綜合引用率 — ${s.total_mentioned} / ${s.total_queries} 個查詢被引用</div>
             <div class="summary-verdict verdict-${s.verdict}">${verdictLabels[s.verdict] || s.verdict}</div>
@@ -925,14 +981,15 @@
     // ============ Website Diagnostics ============
     function renderDiagnostics() {
         const diag = STATE.diagnostics;
-        if (!diag) {
+        const sa = STATE.siteAudit;
+        if (!diag && !sa) {
             return `
             <div class="diag-section">
                 <h2 class="section-title">網站 AI 診斷</h2>
                 <div class="card"><div class="diag-loading"><span class="spinner"></span>正在分析 ${escapeHtml(STATE.websiteUrl)}...</div></div>
             </div>`;
         }
-        if (diag.error) {
+        if (diag && diag.error && (!sa || sa.error)) {
             return `
             <div class="diag-section">
                 <h2 class="section-title">網站 AI 診斷</h2>
@@ -940,14 +997,125 @@
             </div>`;
         }
         return `
-            ${renderCrawlerCheck(diag)}
+            ${renderHealthDashboard(diag, sa)}
+            ${renderCrawlerCheck(diag, sa)}
+            ${renderTechnicalSignals(sa)}
             ${renderCitabilityScore(diag)}
-            ${renderLlmsTxtStatus(diag)}
+            ${renderLlmsTxtStatus(diag, sa)}
         `;
     }
 
-    function renderCrawlerCheck(diag) {
-        const cc = diag.crawler_check;
+    function bindDiagnostics() {
+        // Expand/collapse tech check bodies
+        document.querySelectorAll('.tech-check-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const body = header.nextElementSibling;
+                if (body && body.classList.contains('tech-check-body')) {
+                    body.classList.toggle('open');
+                    const exp = header.querySelector('.tech-check-expand');
+                    if (exp) exp.textContent = body.classList.contains('open') ? '▲' : '▼';
+                }
+            });
+        });
+        // Copy buttons
+        document.querySelectorAll('.tech-snippet-copy').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const snippet = btn.closest('.tech-snippet-wrap').querySelector('.tech-snippet');
+                if (snippet) navigator.clipboard.writeText(snippet.textContent).then(() => {
+                    btn.textContent = '已複製!';
+                    setTimeout(() => { btn.textContent = '複製'; }, 2000);
+                });
+            });
+        });
+    }
+
+    function saCheckScore(check) {
+        if (!check) return null;
+        if (check.status === 'PASS') return 100;
+        if (check.status === 'WARN') return 50;
+        return 0;
+    }
+
+    function saFindCheck(sa, name) {
+        if (!sa || !sa.checks) return null;
+        return sa.checks.find(c => c.name === name) || null;
+    }
+
+    function dimScore(sa, names) {
+        if (!sa || !sa.checks) return null;
+        const scores = names.map(n => saCheckScore(saFindCheck(sa, n))).filter(s => s !== null);
+        if (!scores.length) return null;
+        return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    }
+
+    function gradeColor(score) {
+        if (score === null || score === undefined) return 'var(--text-tertiary)';
+        if (score >= 90) return 'var(--neon-green)';
+        if (score >= 70) return 'var(--blue)';
+        if (score >= 50) return 'var(--accent-yellow)';
+        if (score >= 30) return 'var(--amber)';
+        return 'var(--red)';
+    }
+
+    function renderDots(score) {
+        if (score === null || score === undefined) return '<span style="font-size:11px;color:var(--text-tertiary)">—</span>';
+        const filled = Math.round(score / 25);
+        return [0,1,2,3].map(i => `<div class="health-dot ${i < filled ? 'filled' : 'empty'}"></div>`).join('');
+    }
+
+    function renderHealthDashboard(diag, sa) {
+        const saSum = sa && !sa.error ? sa.summary : null;
+        const totalScore = saSum ? saSum.overall_score : null;
+        const grade = saSum ? saSum.grade : null;
+        const scoreColor = gradeColor(totalScore);
+
+        const crawlerScore = dimScore(sa, ['robots.txt', 'AI 爬蟲存取模擬']);
+        const techScore = dimScore(sa, ['Article Schema', 'FAQPage Schema', 'Open Graph', '圖片優化', 'Meta Description', 'JSON-LD 完整性']);
+        const llmsScore = dimScore(sa, ['llms.txt', 'llms.txt 品質']);
+        const contentScore = diag && diag.citability ? Math.round(diag.citability.average_score || 0) : null;
+
+        const passCount = saSum ? saSum.pass : '—';
+        const warnCount = saSum ? saSum.warn : '—';
+        const failCount = saSum ? saSum.fail : '—';
+        const totalChecks = sa && sa.checks ? sa.checks.length : '—';
+
+        const dims = [
+            { label: '爬蟲存取', score: crawlerScore },
+            { label: '技術信號', score: techScore },
+            { label: '內容品質', score: contentScore },
+            { label: 'llms.txt', score: llmsScore },
+        ];
+
+        return `
+        <div class="diag-section">
+            <h2 class="section-title">🏥 AI 可見度健康診斷</h2>
+            <p class="section-desc">綜合評估網站的 AI 可見度，涵蓋爬蟲存取、技術信號、內容品質、llms.txt ${totalChecks !== '—' ? `共 ${totalChecks} 項檢查` : ''}。</p>
+            <div class="card mb-40">
+                <div class="health-header">
+                    <div class="health-grade">
+                        ${grade ? `<span class="health-grade-letter" style="color:${scoreColor}">${grade}</span>
+                        <span class="health-grade-score">${totalScore}/100</span>` :
+                        `<span class="health-grade-letter" style="color:var(--text-tertiary)">—</span>`}
+                    </div>
+                    <div class="health-summary" style="text-align:right">
+                        ${saSum ? `${totalChecks} 項檢查<br><span style="color:var(--neon-green)">${passCount} PASS</span> · <span style="color:var(--amber)">${warnCount} WARN</span> · <span style="color:var(--red)">${failCount} FAIL</span>` : '正在載入...'}
+                    </div>
+                </div>
+                <div class="health-dims">
+                    ${dims.map(d => `
+                    <div class="health-dim">
+                        <div class="health-dim-label">${d.label}</div>
+                        <div class="health-dim-score" style="color:${gradeColor(d.score)}">${d.score !== null ? d.score : '—'}</div>
+                        <div class="health-dim-dots">${renderDots(d.score)}</div>
+                    </div>`).join('')}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderCrawlerCheck(diag, sa) {
+        const cc = diag && diag.crawler_check;
         if (!cc) return '';
         const crawlers = cc.crawlers || [];
         const score = cc.score || 0;
@@ -957,30 +1125,54 @@
         const tier2 = crawlers.filter(c => c.tier === 2);
         const tier3 = crawlers.filter(c => c.tier === 3);
 
+        // Get per-bot HTTP status from site-audit
+        const botCheck = saFindCheck(sa, 'AI 爬蟲存取模擬');
+        const httpCodes = (botCheck && botCheck.details) ? botCheck.details : {};
+
+        // Normalize bot name for lookup (handle spaces, dashes)
+        function lookupHttp(crawlerName) {
+            const name = crawlerName.trim();
+            if (httpCodes[name] !== undefined) return httpCodes[name];
+            // Try common aliases
+            const aliases = { 'Google-Extended': 'Google-Extended', 'GoogleOther': 'GoogleOther' };
+            return httpCodes[aliases[name]] !== undefined ? httpCodes[aliases[name]] : null;
+        }
+
+        function httpBadge(code) {
+            if (code === null || code === undefined) return '';
+            const cls = (code >= 200 && code < 400) ? 'ok' : code >= 400 ? 'fail' : 'warn';
+            return `<div class="crawler-http ${cls}">實測 HTTP ${code}</div>`;
+        }
+
         function renderCrawlerTier(label, items) {
             if (!items.length) return '';
             return `
                 <div class="crawler-tier">${label}</div>
                 <div class="crawler-grid">
-                    ${items.map(c => `
-                    <div class="crawler-item">
+                    ${items.map(c => {
+                        const httpCode = lookupHttp(c.name);
+                        const mismatch = httpCode !== null && c.status === 'allowed' && httpCode >= 400;
+                        return `
+                    <div class="crawler-item" style="${mismatch ? 'border-color:var(--amber)' : ''}">
                         <div class="crawler-dot ${c.status}"></div>
                         <div class="crawler-info">
                             <div class="crawler-name">${escapeHtml(c.name)}</div>
-                            <div class="crawler-meta">${escapeHtml(c.operator)} · ${escapeHtml(c.purpose)}</div>
+                            <div class="crawler-meta">robots: ${c.status === 'allowed' ? '✓' : c.status === 'blocked' ? '✗' : '○'} · ${escapeHtml(c.operator)}</div>
+                            ${httpBadge(httpCode)}
+                            ${mismatch ? '<div style="font-size:10px;color:var(--amber);margin-top:2px">⚠ robots 允許但實測被擋（WAF?）</div>' : ''}
                         </div>
-                    </div>`).join('')}
+                    </div>`;
+                    }).join('')}
                 </div>`;
         }
 
-        const statusLabels = { allowed: '✓ 允許', blocked: '✗ 封鎖', allowed_default: '○ 未設定（預設允許）' };
         const allowed = crawlers.filter(c => c.status === 'allowed').length;
         const blocked = crawlers.filter(c => c.status === 'blocked').length;
 
         return `
         <div class="diag-section">
-            <h2 class="section-title">AI 爬蟲存取狀態</h2>
-            <p class="section-desc">檢查 ${escapeHtml(STATE.websiteUrl)} 的 robots.txt，確認哪些 AI 平台的爬蟲被允許或封鎖存取你的網站。</p>
+            <h2 class="section-title">🤖 AI 爬蟲存取狀態</h2>
+            <p class="section-desc">robots.txt 設定 + 實測 HTTP 存取，確認 AI 爬蟲能否真正抵達你的網站。</p>
             <div class="card mb-40">
                 <div class="crawler-score">
                     <div class="crawler-score-num" style="color:${scoreColor}">${score}</div>
@@ -992,6 +1184,51 @@
                 ${renderCrawlerTier('Tier 1 — AI 搜尋引擎（最重要）', tier1)}
                 ${renderCrawlerTier('Tier 2 — 主要科技公司 AI', tier2)}
                 ${renderCrawlerTier('Tier 3 — 訓練資料爬蟲', tier3)}
+            </div>
+        </div>`;
+    }
+
+    function renderTechnicalSignals(sa) {
+        if (!sa || sa.error || !sa.checks) return '';
+        const techNames = ['Article Schema', 'FAQPage Schema', 'Open Graph', '圖片優化', 'Meta Description', 'JSON-LD 完整性'];
+        const checks = techNames.map(n => saFindCheck(sa, n)).filter(Boolean);
+        if (!checks.length) return '';
+
+        function statusIcon(status) {
+            if (status === 'PASS') return '✅';
+            if (status === 'WARN') return '⚠️';
+            return '❌';
+        }
+
+        function renderCheck(c) {
+            const hasFix = (c.status === 'FAIL' || c.status === 'WARN') && (c.fix_snippet || c.recommendation);
+            const statusCls = c.status.toLowerCase();
+            return `
+            <div class="tech-check">
+                <div class="tech-check-header">
+                    <span class="tech-check-icon">${statusIcon(c.status)}</span>
+                    <span class="tech-check-name">${escapeHtml(c.name)}</span>
+                    <span class="tech-check-status ${statusCls}">${c.status}</span>
+                    ${hasFix ? '<span class="tech-check-expand">▼</span>' : ''}
+                </div>
+                <div class="tech-check-body ${hasFix ? '' : 'open'}">
+                    <div class="tech-check-msg">${escapeHtml(c.message)}</div>
+                    ${c.recommendation ? `<div class="tech-check-rec">💡 ${escapeHtml(c.recommendation)}</div>` : ''}
+                    ${c.fix_snippet ? `
+                    <div class="tech-snippet-wrap">
+                        <pre class="tech-snippet">${escapeHtml(c.fix_snippet)}</pre>
+                        <button class="tech-snippet-copy">複製</button>
+                    </div>` : ''}
+                </div>
+            </div>`;
+        }
+
+        return `
+        <div class="diag-section">
+            <h2 class="section-title">⚙ 技術信號檢查</h2>
+            <p class="section-desc">Schema 標記、Open Graph、圖片優化、Meta Description — 提升 AI 可讀性的技術基礎。</p>
+            <div class="card mb-40">
+                ${checks.map(renderCheck).join('')}
             </div>
         </div>`;
     }
@@ -1069,17 +1306,30 @@
         </div>`;
     }
 
-    function renderLlmsTxtStatus(diag) {
-        const llm = diag.llmstxt;
+    function renderLlmsTxtStatus(diag, sa) {
+        const llm = diag && diag.llmstxt;
         if (!llm) return '';
         const existing = llm.existing || {};
         const hasFile = existing.exists;
         const sections = llm.sections || {};
         const pagesAnalyzed = llm.pages_analyzed || 0;
 
+        // Quality breakdown from site-audit
+        const qualityCheck = saFindCheck(sa, 'llms.txt 品質');
+        const qualityDetails = qualityCheck && qualityCheck.details;
+        const qualityScore = qualityDetails ? qualityDetails.score : null;
+        const criteria = qualityDetails ? qualityDetails.criteria : null;
+        const criteriaLabels = { description: '描述文字 (100+ chars)', links: '核心頁面連結 (2+)', contact: '聯絡資訊', sections: '結構化段落 (md 標題)' };
+
+        function barColor(pct) {
+            if (pct >= 100) return 'var(--neon-green)';
+            if (pct >= 50) return 'var(--amber)';
+            return 'var(--red)';
+        }
+
         return `
         <div class="diag-section">
-            <h2 class="section-title">llms.txt 狀態</h2>
+            <h2 class="section-title">📄 llms.txt 狀態${qualityScore !== null ? ` <span style="font-size:16px;color:var(--text-secondary);font-weight:400">品質：${qualityScore}/100</span>` : ''}</h2>
             <p class="section-desc">llms.txt 是新興標準，告訴 AI 系統你的網站上最重要的內容。類似 robots.txt 但用途相反 — 主動邀請 AI 來讀取。</p>
             <div class="card mb-40">
                 <div class="llmstxt-status">
@@ -1087,8 +1337,24 @@
                     <span style="font-size:13px;color:var(--text-secondary)">${hasFile ? existing.url : `${escapeHtml(STATE.websiteUrl)}/llms.txt 不存在`}</span>
                 </div>
 
+                ${criteria ? `
+                <div class="quality-breakdown">
+                    <div style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:10px">品質評分 breakdown：</div>
+                    ${Object.entries(criteriaLabels).map(([key, label]) => {
+                        const pass = criteria[key];
+                        const val = pass ? 25 : 0;
+                        const pct = pass ? 100 : 0;
+                        return `
+                    <div class="quality-bar-row">
+                        <span class="quality-bar-label">${label}</span>
+                        <div class="quality-bar-track"><div class="quality-bar-fill" style="width:${pct}%;background:${barColor(pct)}"></div></div>
+                        <span class="quality-bar-val" style="color:${pass ? 'var(--neon-green)' : 'var(--red)'}">${pass ? '✓' : '✗'} ${val}/25</span>
+                    </div>`;
+                    }).join('')}
+                </div>` : ''}
+
                 ${hasFile && existing.format_valid ? `
-                <div style="margin-bottom:16px">
+                <div style="margin-top:16px;margin-bottom:16px">
                     <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">格式檢查：</div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px">
                         <span style="color:${existing.has_title ? 'var(--neon-green)' : 'var(--red)'}">標題 ${existing.has_title ? '✓' : '✗'}</span>
@@ -1167,21 +1433,18 @@
             if (e.key === 'Enter') document.getElementById('navSearchBtn').click();
         });
 
-        // Poll for diagnostics if still loading
-        if (STATE.websiteUrl && !STATE.diagnostics) {
+        // Poll for diagnostics + site-audit if still loading
+        if (STATE.websiteUrl && (!STATE.diagnostics || !STATE.siteAudit)) {
             const diagPoll = setInterval(() => {
-                if (STATE.diagnostics && STATE.page === 'results') {
+                const bothReady = STATE.diagnostics && STATE.siteAudit !== undefined;
+                if (bothReady && STATE.page === 'results') {
                     clearInterval(diagPoll);
-                    // Re-render diagnostics sections in place
                     const diagPlaceholder = document.querySelector('.diag-section');
                     if (diagPlaceholder) {
                         const container = diagPlaceholder.parentElement;
-                        const temp = document.createElement('div');
-                        temp.innerHTML = renderDiagnostics();
-                        // Replace old diag section(s) with new ones
-                        const oldSections = container.querySelectorAll('.diag-section');
-                        oldSections.forEach(s => s.remove());
+                        container.querySelectorAll('.diag-section').forEach(s => s.remove());
                         container.insertAdjacentHTML('beforeend', renderDiagnostics());
+                        bindDiagnostics();
                     }
                 }
             }, 1000);

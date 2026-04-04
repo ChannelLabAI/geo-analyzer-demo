@@ -22,12 +22,22 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
+GEO_ANALYZER_VENV_PYTHON = Path.home() / "projects" / "geo-analyzer" / ".venv" / "bin" / "python3"
+
+_SITE_AUDIT_SCRIPT = """
+import asyncio, sys, json
+sys.path.insert(0, sys.argv[1])
+from geo.site_audit import audit_site
+result = asyncio.run(audit_site(sys.argv[2]))
+print(json.dumps(result.to_dict(), ensure_ascii=False))
+"""
+
 from website_diagnostics import run_all_diagnostics, generate_llmstxt, validate_url
 
 PORT = 8080
 LIVE_MODE = False
 DIR = Path(__file__).parent.resolve()
-GEO_ANALYZER = Path.home() / "AIwork" / "projects" / "geo-analyzer"
+GEO_ANALYZER = Path.home() / "projects" / "geo-analyzer"
 DB_PATH = DIR / "data" / "history.db"
 
 
@@ -171,6 +181,8 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_history_list(parsed)
         elif parsed.path == "/api/history/trend":
             self.handle_trend(parsed)
+        elif parsed.path == "/api/site-audit":
+            self.handle_site_audit(parsed)
         elif parsed.path == "/api/website-diagnostics":
             self.handle_diagnostics(parsed)
         elif parsed.path == "/api/llmstxt-download":
@@ -213,6 +225,31 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
             return
         points = get_brand_trend(brand)
         self.json_response({"brand": brand, "points": points})
+
+    def handle_site_audit(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        url = params.get("url", [""])[0]
+        if not url or not url.startswith(("http://", "https://")):
+            self.json_response({"error": "Missing or invalid URL"}, 400)
+            return
+        from website_diagnostics import validate_url
+        ssrf_err = validate_url(url)
+        if ssrf_err:
+            self.json_response({"error": ssrf_err}, 400)
+            return
+        try:
+            result = subprocess.run(
+                [str(GEO_ANALYZER_VENV_PYTHON), "-c", _SITE_AUDIT_SCRIPT, str(GEO_ANALYZER), url],
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode != 0:
+                self.json_response({"error": result.stderr[:300] or "site_audit failed"}, 500)
+                return
+            self.json_response(json.loads(result.stdout))
+        except subprocess.TimeoutExpired:
+            self.json_response({"error": "Site audit timed out"}, 504)
+        except Exception as e:
+            self.json_response({"error": str(e)}, 500)
 
     def handle_diagnostics(self, parsed):
         params = urllib.parse.parse_qs(parsed.query)
