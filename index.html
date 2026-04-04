@@ -195,8 +195,15 @@
     .history-item:hover .history-delete { opacity: 1; }
     .history-delete:hover { color: var(--red); }
 
+    /* ============ Report Layout ============ */
+    .report-section-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .section-b-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; align-items: start; }
+    .tech-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .tech-2col .diag-section { margin-top: 0; }
+    @media (max-width: 768px) { .section-b-grid { grid-template-columns: 1fr; } .tech-2col { grid-template-columns: 1fr; } }
+
     /* ============ Website Diagnostics ============ */
-    .diag-section { margin-top: 48px; }
+    .diag-section { margin-top: 24px; }
     .diag-section .section-title { margin-bottom: 8px; }
     .diag-section .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
     .diag-loading { text-align: center; padding: 32px; color: var(--text-tertiary); font-size: 14px; }
@@ -669,9 +676,32 @@
     }
 
     // ============ Results Page ============
+    function renderSectionLoading(label) {
+        return `<div class="diag-section">
+            <h2 class="section-title">${label}</h2>
+            <div class="card"><div class="diag-loading"><span class="spinner"></span>正在分析中...</div></div>
+        </div>`;
+    }
+
+    function renderDiagSectionD(diag, sa) {
+        if (!diag && !sa) return renderSectionLoading('D · 技術優化');
+        if (diag && diag.error && (!sa || sa.error)) {
+            return `<div class="diag-section"><div class="card"><div style="padding:16px;color:var(--red);font-size:14px">⚠ 技術診斷失敗</div></div></div>`;
+        }
+        return `
+        <div class="tech-2col">
+            ${renderCrawlerCheck(diag, sa)}
+            ${renderTechnicalSignals(sa)}
+        </div>
+        ${renderLlmsTxtStatus(diag, sa)}`;
+    }
+
     function renderResults() {
         if (!STATE.data) return '';
         const d = STATE.data;
+        const diag = STATE.diagnostics;
+        const sa = STATE.siteAudit;
+        const hasWebsite = !!STATE.websiteUrl;
 
         return `
         <nav class="nav-bar">
@@ -691,42 +721,42 @@
                 <div class="context-queries">${STATE.queries.slice(0,5).map(q => `<span class="query-tag">${q}</span>`).join('')}</div>` : ''}
             </div>
             <div class="context-meta">分析時間：${new Date(d.generated_at || Date.now()).toLocaleString('zh-TW')} | 平台：${d.platforms.map(p => p.name).join('、')}</div>
-
-            <!-- Report Actions -->
             <div class="report-actions">
                 <button class="btn-pdf" onclick="exportPDF()">📄 匯出 PDF 報告</button>
             </div>
 
-            <!-- Summary Banner -->
-            ${renderSummary(d)}
+            <!-- A: AI 可見度健康診斷 -->
+            ${hasWebsite ? `<div id="diag-a">${renderHealthDashboard(diag, sa)}</div>` : ''}
 
-            <!-- Platform Cards -->
-            <h2 class="section-title">各平台引用率</h2>
-            <div class="grid-${Math.min(d.platforms.length, 3)} mb-40">
-                ${d.platforms.map(p => renderPlatformCard(p)).join('')}
+            <!-- B: 引用表現 -->
+            <div class="report-section-label" style="margin-top:${hasWebsite ? '24px' : '0'}">B · 引用表現</div>
+            <div class="section-b-grid">
+                ${renderSummary(d)}
+                <div>
+                    <h2 class="section-title" style="margin-bottom:12px">各平台引用率</h2>
+                    <div class="grid-${Math.min(d.platforms.length, 3)}">
+                        ${d.platforms.map(p => renderPlatformCard(p)).join('')}
+                    </div>
+                </div>
             </div>
 
-            <!-- Query × Platform Matrix -->
             <h2 class="section-title">查詢 × 平台 結果矩陣</h2>
             <p style="font-size:13px;color:var(--text-secondary);margin:-16px 0 20px">每一格代表該查詢在該平台的引用結果。點擊任一列查看詳細內容。</p>
             <div class="card mb-40" style="padding:0;overflow-x:auto">
                 ${renderQueryMatrix(d)}
             </div>
-
-            <!-- Detail Panel (hidden by default) -->
             <div id="detailPanel"></div>
-
-            <!-- Competitor Comparison -->
             ${renderComparison(d)}
-
-            <!-- Trend Chart (loaded async, only if ≥2 data points) -->
-            <div id="trendSection" style="display:none"></div>
-
-            <!-- Source Domains -->
             ${renderSourceDomains(d)}
 
-            <!-- Website Diagnostics -->
-            ${STATE.websiteUrl ? renderDiagnostics() : ''}
+            <!-- C: 內容優化 -->
+            ${hasWebsite ? `<div id="diag-c">${diag ? renderCitabilityScore(diag) : renderSectionLoading('C · 內容優化')}</div>` : ''}
+
+            <!-- D: 技術優化 -->
+            ${hasWebsite ? `<div id="diag-d">${renderDiagSectionD(diag, sa)}</div>` : ''}
+
+            <!-- Trend Chart -->
+            <div id="trendSection" style="display:none"></div>
         </div>`;
     }
 
@@ -1439,13 +1469,15 @@
                 const bothReady = STATE.diagnostics && STATE.siteAudit !== undefined;
                 if (bothReady && STATE.page === 'results') {
                     clearInterval(diagPoll);
-                    const diagPlaceholder = document.querySelector('.diag-section');
-                    if (diagPlaceholder) {
-                        const container = diagPlaceholder.parentElement;
-                        container.querySelectorAll('.diag-section').forEach(s => s.remove());
-                        container.insertAdjacentHTML('beforeend', renderDiagnostics());
-                        bindDiagnostics();
-                    }
+                    const diag = STATE.diagnostics;
+                    const sa = STATE.siteAudit;
+                    const elA = document.getElementById('diag-a');
+                    const elC = document.getElementById('diag-c');
+                    const elD = document.getElementById('diag-d');
+                    if (elA) elA.innerHTML = renderHealthDashboard(diag, sa);
+                    if (elC) elC.innerHTML = renderCitabilityScore(diag);
+                    if (elD) elD.innerHTML = renderDiagSectionD(diag, sa);
+                    bindDiagnostics();
                 }
             }, 1000);
         }
