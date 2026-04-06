@@ -16,6 +16,8 @@ AI 品牌可見度分析工具 — 分析品牌在 Gemini、Perplexity、Google 
 
 ## Quick Start
 
+### GEO Analyzer Demo（競品分析儀表板）
+
 ```bash
 # Demo mode（mock data，不需要 API key）
 python3 serve.py
@@ -30,6 +32,22 @@ python3 serve.py --live --port 3000
 
 Server 啟動後會自動開啟瀏覽器到 `http://localhost:8080/`。
 
+### Brand GEO Score Dashboard（品牌評分儀表板）
+
+輸入品牌網址，AI 分析後給出 0-100 分的品牌 AI 能見度評分，含維度分解和改善建議。
+
+```bash
+# 1. 啟動 Python API（在一個 terminal）
+python3 serve.py
+
+# 2. 啟動 Next.js 前端（在另一個 terminal）
+cd frontend && bun install && bun run dev
+```
+
+前端開啟 [http://localhost:3000](http://localhost:3000)，輸入品牌網址即可開始分析。
+
+**環境需求：** Node.js 18+，Bun，Python 3.9+
+
 ## Modes
 
 | Mode | 說明 | 需要 API Key |
@@ -41,6 +59,8 @@ Live mode 需要 [geo-analyzer](https://github.com/ChannelLabAI/geo-analyzer) �
 
 ## API Endpoints
 
+### GEO Analyzer API
+
 | Method | Path | 說明 |
 |--------|------|------|
 | GET | `/api/analyze?brand=X&queries=Q&competitors=C&platforms=P` | 執行分析 |
@@ -49,6 +69,15 @@ Live mode 需要 [geo-analyzer](https://github.com/ChannelLabAI/geo-analyzer) �
 | GET | `/api/history/<id>` | 單筆分析完整結果 |
 | GET | `/api/history/trend?brand=X` | 品牌趨勢數據 |
 | DELETE | `/api/history/<id>` | 刪除歷史紀錄 |
+
+### Brand GEO Score API
+
+| Method | Path | 說明 |
+|--------|------|------|
+| POST | `/api/brand-score?url=URL&brand=NAME` | 建立評分任務，回傳 `{job_id, estimated_total}` |
+| GET | `/api/brand-score/<job_id>` | 查詢任務進度，回傳 `{status, progress, result}` |
+
+任務 TTL 30 分鐘，狀態：`pending` → `running` → `done` / `error`。
 
 ### Analyze Parameters
 
@@ -60,14 +89,24 @@ Live mode 需要 [geo-analyzer](https://github.com/ChannelLabAI/geo-analyzer) �
 ## Project Structure
 
 ```
-geo-demo/
-├── index.html          # SPA 前端（2 頁：Landing → Results）
-├── serve.py            # HTTP server + API
-├── css/common.css      # NOXCAT dark theme
+geo-analyzer-demo/
+├── index.html              # GEO Analyzer SPA（Landing → Results）
+├── serve.py                # HTTP server + API（GEO Analyzer + Brand GEO Score）
+├── tests/
+│   └── test_brand_score_api.py  # Brand GEO Score API 測試（13 tests）
+├── css/common.css          # NOXCAT dark theme
 ├── data/
-│   ├── mock_data.json  # Demo mode 假資料
-│   └── history.db      # SQLite 歷史資料（auto-generated）
-└── screenshots/        # Live mode 截圖（auto-generated）
+│   ├── mock_data.json      # Demo mode 假資料
+│   └── history.db          # SQLite 歷史資料（auto-generated）
+├── screenshots/            # Live mode 截圖（auto-generated）
+└── frontend/               # Brand GEO Score Dashboard（Next.js 14）
+    ├── app/
+    │   ├── page.tsx        # Landing page（URL + 品牌輸入表單）
+    │   ├── result/[job_id]/page.tsx  # 評分結果頁（polling + 完整報告）
+    │   └── history/page.tsx  # 歷史記錄（Phase 2）
+    ├── components/         # ScoreCard, DimensionBars, ActionItems,
+    │                       #   ChannelCards, BeforeAfter, PollingStatus
+    └── lib/types.ts        # TypeScript 型別定義
 ```
 
 ## Static Deploy (GitHub Pages)

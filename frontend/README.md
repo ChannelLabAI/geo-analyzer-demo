@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brand GEO Score Dashboard
 
-## Getting Started
+Next.js 14 前端，配合 `serve.py` 提供品牌 AI 能見度評分（0-100 分）的完整儀表板。
 
-First, run the development server:
+## 啟動
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 確保 Python API 已在 :8080 跑起來
+cd .. && python3 serve.py &
+
+# 安裝依賴並啟動 dev server
+bun install
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟 [http://localhost:3000](http://localhost:3000)，輸入品牌網址開始分析。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 路由
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | 說明 |
+|------|------|
+| `/` | Landing page — URL + 品牌名輸入表單 |
+| `/result/[job_id]` | 評分結果頁，每 2 秒 polling 直到完成 |
+| `/history` | 歷史記錄（Phase 2，目前為 skeleton） |
 
-## Learn More
+## 組件
 
-To learn more about Next.js, take a look at the following resources:
+| 組件 | 說明 |
+|------|------|
+| `ScoreCard` | 品牌總分 + 等級 ring 動畫（A–F，顏色區分） |
+| `ChannelCards` | 四渠道分解：官網（active）/ 媒體/社群/其他（即將推出） |
+| `DimensionBars` | 技術 / 內容 / 權威三維度進度條 |
+| `ActionItems` | 改善建議，按預估增分排序 |
+| `BeforeAfter` | 完成 Top 3 建議後的預估分數對比 |
+| `PollingStatus` | 分析進度條 + 剩餘時間估算 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 技術細節
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Next.js 14** App Router（Node 18 相容）
+- **Tailwind CSS**，自定義 token：`surface` #0F172A / `card` #1E293B
+- **JetBrains Mono**（`font-data` class）用於所有數字顯示
+- **API Proxy**：`/api/*` → `http://127.0.0.1:8080/api/*`（用 127.0.0.1 避免 IPv6 解析問題）
 
-## Deploy on Vercel
+## Build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+bun run build    # 生產 build
+bun run lint     # ESLint 檢查
+```
