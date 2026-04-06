@@ -9,8 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        // Spec-exact design tokens
+        surface: "#0F172A",  // page background
+        card: "#1E293B",     // card background
+        border: "#334155",   // card/input borders
+        muted: "#94A3B8",    // secondary text
+        // Grade colors (Bella spec)
+        "grade-a": "#22C55E",
+        "grade-b": "#3B82F6",
+        "grade-c": "#F59E0B",
+        "grade-d": "#F97316",
+        "grade-f": "#EF4444",
+      },
+      fontFamily: {
+        mono: ["JetBrains Mono", "Consolas", "monospace"],
       },
     },
   },

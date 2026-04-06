@@ -3,15 +3,22 @@
 @tailwind utilities;
 
 :root {
-  /* Grade colors (Bella design spec) */
-  --grade-a: #22C55E;
-  --grade-b: #3B82F6;
-  --grade-c: #F59E0B;
-  --grade-d: #F97316;
-  --grade-f: #EF4444;
+  --font-inter: "Inter", sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    background-color: #0F172A;
+    color: #F1F5F9;
+    font-family: var(--font-inter);
+  }
 }
 
 @layer utilities {
+  .font-data {
+    font-family: var(--font-jetbrains-mono);
+  }
   .text-balance {
     text-wrap: balance;
   }

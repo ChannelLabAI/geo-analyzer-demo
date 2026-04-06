@@ -5,8 +5,10 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { BrandGEOScore, JobResponse, API_BASE } from "@/lib/types";
 import { ScoreCard } from "@/components/ScoreCard";
+import { ChannelCards } from "@/components/ChannelCards";
 import { DimensionBars } from "@/components/DimensionBars";
 import { ActionItems } from "@/components/ActionItems";
+import { BeforeAfter } from "@/components/BeforeAfter";
 import { PollingStatus } from "@/components/PollingStatus";
 
 const POLL_INTERVAL_MS = 2000;
@@ -73,8 +75,8 @@ export default function ResultPage() {
       <main className="min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-5xl mb-4">⚠️</div>
         <p className="text-xl font-semibold text-red-400 mb-2">無法取得結果</p>
-        <p className="text-sm text-gray-400 text-center max-w-md mb-6">{fetchError}</p>
-        <Link href="/" className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors">
+        <p className="text-sm text-slate-400 text-center max-w-md mb-6">{fetchError}</p>
+        <Link href="/" className="px-6 py-2 bg-slate-700 hover:bg-gray-600 rounded-lg text-sm transition-colors">
           重新分析
         </Link>
       </main>
@@ -85,7 +87,7 @@ export default function ResultPage() {
   if (!job || job.status === "pending" || job.status === "running") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-md bg-gray-800 rounded-2xl p-8">
+        <div className="w-full max-w-md bg-card rounded-2xl p-8">
           <PollingStatus
             status={(job?.status as "pending" | "running") ?? "pending"}
             progress={job?.progress ?? 0}
@@ -102,7 +104,7 @@ export default function ResultPage() {
   if (job.status === "error") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-md bg-gray-800 rounded-2xl p-8">
+        <div className="w-full max-w-md bg-card rounded-2xl p-8">
           <PollingStatus
             status="error"
             progress={0}
@@ -123,16 +125,24 @@ export default function ResultPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Nav */}
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
+          <Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">
             ← 重新分析
           </Link>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-slate-600">
             生成時間：{new Date(score.generated_at).toLocaleString("zh-TW")}
           </span>
         </div>
 
+        {/* One-line summary */}
+        <p className="text-sm text-slate-400 text-center">
+          {score.brand} 的品牌 AI 能見度評分為 <span className="font-data font-semibold text-slate-200">{Math.round(score.overall_score)}</span> 分（{score.grade} 等），以下是詳細分析。
+        </p>
+
         {/* Score card */}
         <ScoreCard score={score} />
+
+        {/* Four-channel breakdown */}
+        <ChannelCards score={score} />
 
         {/* Dimension breakdown */}
         <DimensionBars website={score.website} />
@@ -145,9 +155,12 @@ export default function ResultPage() {
         {/* Action items */}
         <ActionItems items={score.action_items} />
 
+        {/* Before/After prediction */}
+        <BeforeAfter score={score} />
+
         {/* Footer */}
-        <div className="text-center text-xs text-gray-600 pb-4">
-          Built by <a href="https://channellab.tw" className="hover:text-gray-400">ChannelLab</a>
+        <div className="text-center text-xs text-slate-600 pb-4">
+          Built by <a href="https://channellab.tw" className="hover:text-slate-400">ChannelLab</a>
         </div>
       </div>
     </main>
@@ -158,17 +171,17 @@ function TechnicalDetail({ breakdown }: { breakdown: Record<string, { status: st
   const STATUS_ICON: Record<string, string> = { PASS: "✅", WARN: "⚠️", FAIL: "❌" };
 
   return (
-    <div className="bg-gray-800 rounded-2xl p-6">
-      <h3 className="text-base font-semibold text-gray-300 mb-4">技術審查明細</h3>
+    <div className="bg-card rounded-2xl p-6">
+      <h3 className="text-base font-semibold text-slate-300 mb-4">技術審查明細</h3>
       <div className="space-y-2">
         {Object.entries(breakdown).map(([name, check]) => (
-          <div key={name} className="flex items-start gap-3 py-2 border-b border-gray-700/50 last:border-0">
+          <div key={name} className="flex items-start gap-3 py-2 border-b border-slate-700/50 last:border-0">
             <span className="text-base mt-0.5 shrink-0">{STATUS_ICON[check.status] ?? "❓"}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-300">{name}</p>
-              <p className="text-xs text-gray-500 mt-0.5 truncate">{check.detail}</p>
+              <p className="text-sm font-medium text-slate-300">{name}</p>
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{check.detail}</p>
             </div>
-            <span className="text-xs font-semibold shrink-0" style={{ color: check.score >= 50 ? "#34D399" : "#F87171" }}>
+            <span className="font-data text-xs font-semibold shrink-0" style={{ color: check.score >= 50 ? "#34D399" : "#F87171" }}>
               {check.score}
             </span>
           </div>

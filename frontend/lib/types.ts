@@ -31,6 +31,7 @@ export interface BrandGEOScore {
   data_confidence: "low" | "medium" | "high";
   action_items: ActionItem[];
   generated_at: string;
+  estimated_after_top3: number;
 }
 
 export type JobStatus = "pending" | "running" | "done" | "error";
