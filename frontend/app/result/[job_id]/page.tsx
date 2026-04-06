@@ -5,7 +5,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { BrandGEOScore, JobResponse, API_BASE } from "@/lib/types";
 import { ScoreCard } from "@/components/ScoreCard";
-import { ChannelCards } from "@/components/ChannelCards";
+import { ChannelHealthCards } from "@/components/ChannelHealthCards";
+import { ChannelRadar } from "@/components/ChannelRadar";
+import { SourceChannelMatrix } from "@/components/SourceChannelMatrix";
 import { DimensionBars } from "@/components/DimensionBars";
 import { ActionItems } from "@/components/ActionItems";
 import { BeforeAfter } from "@/components/BeforeAfter";
@@ -135,14 +137,32 @@ export default function ResultPage() {
 
         {/* One-line summary */}
         <p className="text-sm text-slate-400 text-center">
-          {score.brand} 的品牌 AI 能見度評分為 <span className="font-data font-semibold text-slate-200">{Math.round(score.overall_score)}</span> 分（{score.grade} 等），以下是詳細分析。
+          {score.brand} 的品牌 AI 能見度評分為{" "}
+          <span className="font-mono font-semibold text-slate-200">
+            {score.full_channel_score
+              ? `${Math.round(score.full_channel_score)}（全渠道）`
+              : Math.round(score.overall_score)}
+          </span>{" "}
+          分（{score.grade} 等），以下是詳細分析。
         </p>
 
-        {/* Score card */}
-        <ScoreCard score={score} />
+        {/* Score card + Radar chart side-by-side when full-channel available */}
+        {score.full_channel ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ScoreCard score={score} />
+            <ChannelRadar fullChannel={score.full_channel} />
+          </div>
+        ) : (
+          <ScoreCard score={score} />
+        )}
 
-        {/* Four-channel breakdown */}
-        <ChannelCards score={score} />
+        {/* Channel health cards (Phase 2) or legacy cards (Phase 1) */}
+        <ChannelHealthCards score={score} />
+
+        {/* Source × Channel cross-analysis (Phase 2 only) */}
+        {score.full_channel && (
+          <SourceChannelMatrix fullChannel={score.full_channel} />
+        )}
 
         {/* Dimension breakdown */}
         <DimensionBars website={score.website} />

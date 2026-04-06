@@ -20,6 +20,11 @@ const config: Config = {
         "grade-c": "#F59E0B",
         "grade-d": "#F97316",
         "grade-f": "#EF4444",
+        // Phase 2: Channel colors (hue separation ≥60°, WCAG AA on dark bg)
+        "channel-web": "#3B82F6",    // Blue 500 — website
+        "channel-media": "#F59E0B",  // Amber 500 — media
+        "channel-social": "#EC4899", // Pink 500 — social
+        "channel-auth": "#A78BFA",   // Violet 400 — authority
       },
       fontFamily: {
         mono: ["JetBrains Mono", "Consolas", "monospace"],
