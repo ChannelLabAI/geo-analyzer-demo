@@ -16,6 +16,8 @@ import socketserver
 import sqlite3
 import subprocess
 import sys
+import threading
+import time
 import urllib.parse
 import uuid
 import webbrowser
@@ -31,6 +33,98 @@ from geo.site_audit import audit_site
 result = asyncio.run(audit_site(sys.argv[2]))
 print(json.dumps(result.to_dict(), ensure_ascii=False))
 """
+
+_BRAND_SCORE_SCRIPT = """
+import asyncio, sys, json
+sys.path.insert(0, sys.argv[1])
+from geo.scoring import compute_brand_geo_score
+result = asyncio.run(compute_brand_geo_score(sys.argv[2], sys.argv[3]))
+print(json.dumps(result.to_dict(), ensure_ascii=False))
+"""
+
+# ---------------------------------------------------------------------------
+# Brand GEO Score job store (in-memory, thread-safe, 30-min TTL)
+# ---------------------------------------------------------------------------
+
+_JOBS: dict[str, dict] = {}
+_JOBS_LOCK = threading.Lock()
+_JOB_TTL = 1800  # 30 minutes
+
+
+def _create_brand_score_job(url: str, brand: str) -> str:
+    """Create a job entry and spawn the background computation thread."""
+    job_id = str(uuid.uuid4()).replace("-", "")[:16]
+    with _JOBS_LOCK:
+        _JOBS[job_id] = {
+            "status": "pending",
+            "progress": 0,
+            "result": None,
+            "error": None,
+            "created_at": time.time(),
+            "estimated_total": 45.0,
+        }
+    t = threading.Thread(target=_run_brand_score_job, args=(job_id, url, brand), daemon=True)
+    t.start()
+    return job_id
+
+
+def _run_brand_score_job(job_id: str, url: str, brand: str) -> None:
+    """Background thread: run compute_brand_geo_score via subprocess and store result."""
+    with _JOBS_LOCK:
+        if job_id in _JOBS:
+            _JOBS[job_id]["status"] = "running"
+            _JOBS[job_id]["progress"] = 5
+
+    try:
+        result = subprocess.run(
+            [
+                str(GEO_ANALYZER_VENV_PYTHON), "-c", _BRAND_SCORE_SCRIPT,
+                str(GEO_ANALYZER), url, brand,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        with _JOBS_LOCK:
+            if job_id not in _JOBS:
+                return
+            if result.returncode != 0:
+                err = result.stderr.strip()[:400] or "brand-score subprocess failed"
+                _JOBS[job_id]["status"] = "error"
+                _JOBS[job_id]["error"] = err
+                _JOBS[job_id]["progress"] = 0
+            else:
+                data = json.loads(result.stdout)
+                _JOBS[job_id]["status"] = "done"
+                _JOBS[job_id]["result"] = data
+                _JOBS[job_id]["progress"] = 100
+    except subprocess.TimeoutExpired:
+        with _JOBS_LOCK:
+            if job_id in _JOBS:
+                _JOBS[job_id]["status"] = "error"
+                _JOBS[job_id]["error"] = "Analysis timed out (180s)"
+    except json.JSONDecodeError as e:
+        with _JOBS_LOCK:
+            if job_id in _JOBS:
+                _JOBS[job_id]["status"] = "error"
+                _JOBS[job_id]["error"] = f"Invalid JSON from analyzer: {e}"
+    except Exception as e:
+        with _JOBS_LOCK:
+            if job_id in _JOBS:
+                _JOBS[job_id]["status"] = "error"
+                _JOBS[job_id]["error"] = str(e)
+
+
+def _cleanup_expired_jobs() -> None:
+    """Background thread: sweep _JOBS every 5 minutes, drop entries older than TTL."""
+    while True:
+        time.sleep(300)
+        cutoff = time.time() - _JOB_TTL
+        with _JOBS_LOCK:
+            expired = [jid for jid, j in _JOBS.items() if j["created_at"] < cutoff]
+            for jid in expired:
+                del _JOBS[jid]
+
 
 from website_diagnostics import run_all_diagnostics, generate_llmstxt, validate_url
 
@@ -190,8 +284,60 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
         elif re.match(r"^/api/history/[a-f0-9]+$", parsed.path):
             record_id = parsed.path.split("/")[-1]
             self.handle_history_detail(record_id)
+        elif re.match(r"^/api/brand-score/[a-f0-9]{16}$", parsed.path):
+            job_id = parsed.path.split("/")[-1]
+            self.handle_brand_score_get(job_id)
         else:
             super().do_GET()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/brand-score":
+            self.handle_brand_score_post(parsed)
+        else:
+            self.json_response({"error": "Not found"}, 404)
+
+    def do_OPTIONS(self):
+        """Handle CORS preflight for Next.js dev proxy."""
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def handle_brand_score_post(self, parsed):
+        params = urllib.parse.parse_qs(parsed.query)
+        url = params.get("url", [""])[0]
+        brand = params.get("brand", [""])[0].strip()
+
+        if not url or not url.startswith(("http://", "https://")):
+            self.json_response({"error": "Missing or invalid URL (must start with http:// or https://)"}, 400)
+            return
+        if not brand:
+            self.json_response({"error": "Missing brand name"}, 400)
+            return
+        ssrf_err = validate_url(url)
+        if ssrf_err:
+            self.json_response({"error": ssrf_err}, 400)
+            return
+
+        job_id = _create_brand_score_job(url, brand)
+        self.json_response({"job_id": job_id, "estimated_total": 45.0}, 201)
+
+    def handle_brand_score_get(self, job_id: str):
+        with _JOBS_LOCK:
+            job = _JOBS.get(job_id)
+        if job is None:
+            self.json_response({"error": "Job not found or expired"}, 404)
+            return
+        self.json_response({
+            "job_id": job_id,
+            "status": job["status"],
+            "progress": job["progress"],
+            "result": job["result"],
+            "error": job["error"],
+            "estimated_total": job["estimated_total"],
+        })
 
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -491,6 +637,9 @@ class GEOHandler(http.server.SimpleHTTPRequestHandler):
 def main():
     parse_args()
     init_db()
+    # Start background job cleanup thread
+    cleanup_thread = threading.Thread(target=_cleanup_expired_jobs, daemon=True)
+    cleanup_thread.start()
     class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         daemon_threads = True
     server = ThreadedServer(("127.0.0.1", PORT), GEOHandler)
