@@ -1,6 +1,6 @@
 # GEO Analyzer Demo
 
-AI 品牌可見度分析工具 — 分析品牌在 Gemini、Perplexity、Google AI Overview 等 AI 搜尋平台的引用表現。
+AI 品牌可見度分析工具 — 分析品牌在 Gemini、Perplexity、Google AI Overview 等 AI 搜尋平台的引用表現。Phase 2 新增全渠道儀表板：ChannelRadar 雷達圖、ChannelHealthCards 渠道評分卡、Source × Channel 交叉矩陣。
 
 **Live Demo:** [channellabai.github.io/geo-analyzer-demo](https://channellabai.github.io/geo-analyzer-demo/)
 
@@ -13,6 +13,9 @@ AI 品牌可見度分析工具 — 分析品牌在 Gemini、Perplexity、Google 
 - **歷史趨勢** — 追蹤品牌引用率隨時間的變化（≥2 次分析時顯示折線圖）
 - **PDF 報告匯出** — 一鍵生成專業 PDF 報告
 - **分析結果持久化** — SQLite 自動存檔，可回看歷史分析
+- **Phase 2: ChannelRadar** — SVG 菱形雷達圖，展示 Website / Media / Social / Authority 四維度加權分
+- **Phase 2: ChannelHealthCards** — 各渠道評分卡（分數、數據信心指標、平台詳情）
+- **Phase 2: Source × Channel 矩陣** — 哪些 AI 引擎偏好引用哪個渠道，支援 hover tooltip
 
 ## Quick Start
 
@@ -105,8 +108,9 @@ geo-analyzer-demo/
     │   ├── result/[job_id]/page.tsx  # 評分結果頁（polling + 完整報告）
     │   └── history/page.tsx  # 歷史記錄（Phase 2）
     ├── components/         # ScoreCard, DimensionBars, ActionItems,
-    │                       #   ChannelCards, BeforeAfter, PollingStatus
-    └── lib/types.ts        # TypeScript 型別定義
+    │                       #   ChannelHealthCards, ChannelRadar,
+    │                       #   SourceChannelMatrix, BeforeAfter, PollingStatus
+    └── lib/types.ts        # TypeScript 型別定義（Phase 2: FullChannelScore, MediaScore, SocialScore…）
 ```
 
 ## Static Deploy (GitHub Pages)
